@@ -1,6 +1,86 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NUCLEUS_KNOWLEDGE } from "../../lib/nucleus-knowledge.js";
 
+/**
+ * Robust JSON extraction from model output.
+ * Handles: code blocks, trailing text, unescaped newlines in strings.
+ */
+function extractJSON(text) {
+  // Strip markdown code blocks
+  let jsonStr = text;
+  if (text.includes("```json")) {
+    jsonStr = text.split("```json")[1].split("```")[0];
+  } else if (text.includes("```")) {
+    jsonStr = text.split("```")[1].split("```")[0];
+  }
+  jsonStr = jsonStr.trim();
+
+  // First try: direct parse
+  try {
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    // Fall through to repair
+  }
+
+  // Second try: find the outermost { } and parse just that
+  const firstBrace = jsonStr.indexOf("{");
+  const lastBrace = jsonStr.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    const extracted = jsonStr.slice(firstBrace, lastBrace + 1);
+    try {
+      return JSON.parse(extracted);
+    } catch (e) {
+      // Fall through to repair
+    }
+  }
+
+  // Third try: fix unescaped newlines inside string values
+  // Replace actual newlines between quotes with \\n
+  const repaired = jsonStr.replace(
+    /"([^"]*?)"/gs,
+    (match, content) => {
+      const fixed = content
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r")
+        .replace(/\t/g, "\\t");
+      return `"${fixed}"`;
+    }
+  );
+
+  try {
+    return JSON.parse(repaired);
+  } catch (e) {
+    // Fall through
+  }
+
+  // Fourth try: same repair on the extracted braces version
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    const extracted = jsonStr.slice(firstBrace, lastBrace + 1);
+    const repaired2 = extracted.replace(
+      /"([^"]*?)"/gs,
+      (match, content) => {
+        const fixed = content
+          .replace(/\n/g, "\\n")
+          .replace(/\r/g, "\\r")
+          .replace(/\t/g, "\\t");
+        return `"${fixed}"`;
+      }
+    );
+    try {
+      return JSON.parse(repaired2);
+    } catch (e) {
+      // Give up with useful error
+      throw new Error(
+        `JSON parse failed after repair attempts. First 500 chars: ${jsonStr.slice(0, 500)}`
+      );
+    }
+  }
+
+  throw new Error(
+    `No valid JSON found in response. First 500 chars: ${text.slice(0, 500)}`
+  );
+}
+
 const SYSTEM_PROMPT = `You are the Hamilton Beach Brand Nucleus — a brand intelligence system that produces outputs grounded in encoded brand knowledge. You reason from the knowledge encoded below. You do not retrieve keywords. You apply brand logic the way a senior strategist who has lived on this account for years would — not by searching notes, but by having absorbed the brand's gravitational core.
 
 The knowledge encoded below is structured in named slots. Each slot is a component of the brand's identity, behavior, or operational context. When processing a request, you activate the most relevant slots and use them to shape your output.
@@ -65,75 +145,26 @@ Rules:
   });
 
   const text = response.content[0].text;
-
-  // Parse JSON from response — handle markdown code blocks
-  let jsonStr = text;
-  if (text.includes("```json")) {
-    jsonStr = text.split("```json")[1].split("```")[0];
-  } else if (text.includes("```")) {
-    jsonStr = text.split("```")[1].split("```")[0];
-  }
-
-  return JSON.parse(jsonStr.trim());
+  return extractJSON(text);
 }
 
 /**
- * Call 2: Grounded Output Generation
- * Takes intent object, produces the actual content + reasoning trace
+ * Call 2: Brand Context Package
+ * Takes intent object, produces a structured context package that a downstream
+ * satellite tool would consume to do its specific job (write copy, build a brief, etc.)
+ * The Nucleus is the intelligence layer, not the copywriter.
  */
-async function generateOutput(client, intentObject, requestText) {
+async function buildContextPackage(client, intentObject, requestText) {
   const componentList = intentObject.activated_components
     .map((c) => `${c.component} (${c.confidence})`)
     .join(", ");
-
-  // Build satellite-specific instructions based on output type
-  let satelliteInstructions = "";
-
-  switch (intentObject.output_type) {
-    case "reddit_post":
-      satelliteInstructions = `OUTPUT FORMAT: Reddit Post
-Follow the SATELLITE SPEC — REDDIT POST rules from the knowledge exactly:
-- Free-form conversational. No branded header. Must read as organic.
-- 150-300 words for organic-style posts.
-- Open with the real situation, not the product.
-- Include at least one specific real-use detail.
-- Close with something that invites engagement or acknowledges trade-offs.
-- First person, specific, practical. Honest about limitations.
-- NO brand adjectives. NO promotional language. NO hashtags.
-- Refer to the product naturally ("my slow cooker", "the HB one").
-- Never start with "Hamilton Beach is..." or any brand announcement.`;
-      break;
-
-    case "video_brief":
-      satelliteInstructions = `OUTPUT FORMAT: :15 Video Brief
-Follow the SATELLITE SPEC — :15 VIDEO BRIEF rules from the knowledge exactly:
-- Beat structure: 0-3s establish, 3-8s hero, 8-13s reveal, 13-15s lockup.
-- "Built for [X]. Also built for [Y]." — the dual-use format IS the structure.
-- Real kitchen environments. Food as visual hero. Product as enabler.
-- Person present but not performing.
-- [Y] should be the more relatable or surprising moment.
-- Include: visual description, copy/VO for each beat, tone notes, CTA if applicable.`;
-      break;
-
-    case "social_caption":
-      satelliteInstructions = `OUTPUT FORMAT: Instagram/TikTok Caption
-Follow the SATELLITE SPEC — SOCIAL BRIEF rules from the knowledge exactly:
-- 1-3 sentences max. Hook in first line (Instagram cuts at ~125 chars).
-- Lead with the real moment, not the product.
-- Second sentence introduces product naturally.
-- Third sentence: invitation to engage, question, or simple CTA.
-- 3-5 hashtags: #madewithhamiltonbeach as anchor + community hashtags.
-- Yes You Can Chef voice: warm, encouraging, permission-giving.
-- Built For This voice: matter-of-fact, specific, practical.`;
-      break;
-  }
 
   const laneLabel =
     intentObject.platform_lane === "yes_you_can_chef"
       ? "Yes You Can Chef"
       : "Built For This";
 
-  const userPrompt = `Generate the output for this classified request.
+  const userPrompt = `You are producing a brand context package for a downstream satellite tool. You are NOT writing the final content. You are assembling the brand intelligence, audience context, tone direction, and structural guidance that a satellite tool needs to do its job well.
 
 ORIGINAL REQUEST:
 ${requestText}
@@ -148,45 +179,53 @@ INTENT CLASSIFICATION:
 - Activation reasoning: ${intentObject.activation_reasoning}
 - Lane reasoning: ${intentObject.lane_reasoning}
 
-${satelliteInstructions}
+Your task: Read the activated components from the encoded knowledge and produce a structured context package. Extract the specific knowledge a satellite needs — not everything, just what is relevant to THIS request. Be concrete and operational, not abstract.
 
-PLATFORM LANE APPLICATION:
-You are writing in the "${laneLabel}" lane. Apply the lane's voice, tone, and strategic approach as encoded in the knowledge. ${
-    intentObject.platform_lane === "yes_you_can_chef"
-      ? "Lead with permission and encouragement. The emotional moment is before — the hesitation, the doubt."
-      : 'Lead with the product proving itself in a real situation. Declarative, grounded, matter-of-fact. The dual-use structure "Built for X. Also built for Y" is the format.'
-  }
-
-Return your response as JSON with exactly two fields:
+Return ONLY valid JSON matching this schema:
 {
-  "output": "The complete generated content — the Reddit post, video brief, or caption. Write it as a finished piece ready to use, not as a description of what it would be.",
-  "reasoning_trace": "2-3 sentences explaining what you drew from the activated knowledge components and how the platform lane shaped your specific word choices, structure, and tone. Be concrete — reference specific anchors, specific audience insights, specific tone decisions."
+  "satellite_type": "${intentObject.output_type}",
+  "objective": "One sentence: what should the final output accomplish for this specific audience in this specific channel?",
+  "audience_context": {
+    "who": "Specific description of the person this is for, drawn from THE_HUMAN",
+    "mindset": "What they are thinking/feeling right now in their journey — draw from the consumer behavior phase that matches",
+    "what_they_need": "What this person needs to hear or feel from this content — not what the brand wants to say"
+  },
+  "tone_direction": {
+    "lane": "${laneLabel}",
+    "register": "2-3 adjectives that describe the specific emotional register for this output",
+    "sounds_like": "One sentence describing what the voice should sound like — be specific",
+    "does_not_sound_like": "One sentence describing what to avoid — be specific to this lane and channel"
+  },
+  "content_inputs": {
+    "primary_message": "The core thing the output needs to communicate",
+    "product_context": "What is true and relevant about this product for this request — draw from THE_PROOF and product knowledge",
+    "use_cases": ["Specific real-life use cases relevant to this request — draw from product knowledge and THE_JOB"],
+    "proof_points": ["Specific facts, stats, or heritage points to ground the output — only what is documented"],
+    "anchors_to_apply": ["Which brand anchors from THE_ANCHORS should shape this specific output and how"]
+  },
+  "structural_rules": ["3-5 specific rules for how the output should be structured — draw from the satellite spec for this output type in the knowledge file"],
+  "avoid": ["3-5 specific things the output must NOT do — draw from the satellite spec, lane rules, and brand anchors"],
+  "reasoning_trace": "2-3 sentences explaining how you assembled this package — what you drew from which components and why. Be concrete."
 }
 
 Rules:
-- The output must be grounded in the encoded knowledge — every choice should trace back to something in the Brand Center
-- The output must sound like a real person, not a brand
-- The reasoning trace must be honest and specific, not boilerplate
-- Never use competitor brand names in the output
-- Never invent product claims not in the knowledge`;
+- Every field must trace back to something in the encoded knowledge. Do not invent.
+- audience_context should draw from THE_HUMAN and the relevant consumer behavior phase.
+- tone_direction should draw from THE_FEEL and the specific platform lane.
+- content_inputs should draw from THE_PROOF, THE_JOB, THE_ANCHORS, and product knowledge.
+- structural_rules should draw from the satellite spec for this output type.
+- avoid should draw from the satellite spec "what must never appear" and THE_FEEL "does not sound like."
+- Be specific and operational. A satellite tool reading this should know exactly what to do and what not to do.`;
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 2000,
+    max_tokens: 2500,
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: userPrompt }],
   });
 
   const text = response.content[0].text;
-
-  let jsonStr = text;
-  if (text.includes("```json")) {
-    jsonStr = text.split("```json")[1].split("```")[0];
-  } else if (text.includes("```")) {
-    jsonStr = text.split("```")[1].split("```")[0];
-  }
-
-  return JSON.parse(jsonStr.trim());
+  return extractJSON(text);
 }
 
 /**
@@ -219,8 +258,8 @@ export async function POST(request) {
       sku: sku || "unspecified",
     });
 
-    // Call 2: Grounded Output Generation
-    const generatedOutput = await generateOutput(
+    // Call 2: Brand Context Package
+    const contextPackage = await buildContextPackage(
       client,
       intentObject,
       request_text
@@ -229,8 +268,7 @@ export async function POST(request) {
     // Assemble full response
     const response = {
       intent: intentObject,
-      output: generatedOutput.output,
-      reasoning_trace: generatedOutput.reasoning_trace,
+      context_package: contextPackage,
       _metadata: {
         nucleus_version: "1.0",
         knowledge_version: "v1.0",

@@ -3,49 +3,6 @@
 import { useState, useCallback } from "react";
 
 // ============================================================================
-// DEMO REQUESTS — exactly as specced
-// ============================================================================
-
-const DEMO_REQUESTS = [
-  {
-    id: 1,
-    label: "Request 1",
-    subtitle: "Reddit Post — Built For This",
-    output_type: "reddit_post",
-    platform_lane: "built_for_this",
-    audience: "Zillennial, 27, research phase, first real apartment",
-    channel: "Reddit — r/MealPrepSunday or r/Frugal",
-    sku: "slow_cooker",
-    request_text:
-      "Write a Reddit post for someone in a cooking or frugal-living subreddit who is trying to figure out if a Hamilton Beach slow cooker is worth buying. They are 27, living in their first real apartment, trying to do more meal prep, budget-conscious, and not sure if they'll actually use it.",
-  },
-  {
-    id: 2,
-    label: "Request 2",
-    subtitle: "Video Brief — Built For This",
-    output_type: "video_brief",
-    platform_lane: "built_for_this",
-    audience: "Zillennial, any stage",
-    channel: "Instagram / TikTok",
-    sku: "slow_cooker",
-    request_text:
-      "Generate a :15 video brief for the Hamilton Beach slow cooker. Built For This format. Primary use: Sunday meal prep. Secondary use: unexpected guests Thursday night.",
-  },
-  {
-    id: 3,
-    label: "Request 3",
-    subtitle: "Instagram Caption — Yes You Can Chef",
-    output_type: "social_caption",
-    platform_lane: "yes_you_can_chef",
-    audience: "Zillennial, first-use / post-purchase",
-    channel: "Instagram",
-    sku: "slow_cooker",
-    request_text:
-      "Write an Instagram caption for someone making their first slow cooker meal. They are nervous, it turned out better than expected, and they want to share it. Yes You Can Chef lane.",
-  },
-];
-
-// ============================================================================
 // COMPONENT DEFINITIONS
 // ============================================================================
 
@@ -97,6 +54,7 @@ const C = {
   green: "#2D6A2D",
   greenLight: "#E8F5E8",
   amber: "#D47A00",
+  amberLight: "#FFF3E0",
   textPrimary: "#1A1A1A",
   textSecondary: "#555555",
   cardBg: "#FFFFFF",
@@ -104,14 +62,149 @@ const C = {
 };
 
 // ============================================================================
-// OUTPUT TYPE LABELS
+// CONTEXT PACKAGE RENDERER
 // ============================================================================
 
-const OUTPUT_LABELS = {
-  reddit_post: "REDDIT POST",
-  video_brief: ":15 VIDEO BRIEF",
-  social_caption: "INSTAGRAM CAPTION",
-};
+function ContextPackageDisplay({ pkg }) {
+  if (!pkg) return null;
+
+  return (
+    <div style={styles.packageGrid}>
+      {/* Objective */}
+      <div style={{ ...styles.packageSection, gridColumn: "1 / -1" }}>
+        <h3 style={styles.packageLabel}>OBJECTIVE</h3>
+        <p style={styles.packageValue}>{pkg.objective}</p>
+      </div>
+
+      {/* Audience Context */}
+      <div style={styles.packageSection}>
+        <h3 style={styles.packageLabel}>AUDIENCE CONTEXT</h3>
+        <div style={styles.subFields}>
+          <div>
+            <span style={styles.subLabel}>Who</span>
+            <p style={styles.subValue}>{pkg.audience_context?.who}</p>
+          </div>
+          <div>
+            <span style={styles.subLabel}>Mindset</span>
+            <p style={styles.subValue}>{pkg.audience_context?.mindset}</p>
+          </div>
+          <div>
+            <span style={styles.subLabel}>What they need</span>
+            <p style={styles.subValue}>
+              {pkg.audience_context?.what_they_need}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tone Direction */}
+      <div style={styles.packageSection}>
+        <h3 style={styles.packageLabel}>TONE DIRECTION</h3>
+        <div style={styles.subFields}>
+          <div>
+            <span style={styles.subLabel}>Lane</span>
+            <p style={styles.subValue}>{pkg.tone_direction?.lane}</p>
+          </div>
+          <div>
+            <span style={styles.subLabel}>Register</span>
+            <p style={styles.subValue}>{pkg.tone_direction?.register}</p>
+          </div>
+          <div>
+            <span style={styles.subLabel}>Sounds like</span>
+            <p style={styles.subValue}>{pkg.tone_direction?.sounds_like}</p>
+          </div>
+          <div>
+            <span style={styles.subLabel}>Does not sound like</span>
+            <p style={styles.subValue}>
+              {pkg.tone_direction?.does_not_sound_like}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Inputs */}
+      <div style={{ ...styles.packageSection, gridColumn: "1 / -1" }}>
+        <h3 style={styles.packageLabel}>CONTENT INPUTS</h3>
+        <div style={styles.subFields}>
+          <div>
+            <span style={styles.subLabel}>Primary message</span>
+            <p style={styles.subValue}>
+              {pkg.content_inputs?.primary_message}
+            </p>
+          </div>
+          <div>
+            <span style={styles.subLabel}>Product context</span>
+            <p style={styles.subValue}>
+              {pkg.content_inputs?.product_context}
+            </p>
+          </div>
+          {pkg.content_inputs?.use_cases?.length > 0 && (
+            <div>
+              <span style={styles.subLabel}>Use cases</span>
+              <div style={styles.tagList}>
+                {pkg.content_inputs.use_cases.map((uc, i) => (
+                  <span key={i} style={styles.tagItem}>
+                    {uc}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {pkg.content_inputs?.proof_points?.length > 0 && (
+            <div>
+              <span style={styles.subLabel}>Proof points</span>
+              <div style={styles.tagList}>
+                {pkg.content_inputs.proof_points.map((pp, i) => (
+                  <span key={i} style={styles.tagItem}>
+                    {pp}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {pkg.content_inputs?.anchors_to_apply?.length > 0 && (
+            <div>
+              <span style={styles.subLabel}>Anchors to apply</span>
+              <div style={styles.tagList}>
+                {pkg.content_inputs.anchors_to_apply.map((a, i) => (
+                  <span key={i} style={{ ...styles.tagItem, ...styles.tagAnchor }}>
+                    {a}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Structural Rules + Avoid — side by side */}
+      {pkg.structural_rules?.length > 0 && (
+        <div style={styles.packageSection}>
+          <h3 style={styles.packageLabel}>STRUCTURAL RULES</h3>
+          <ul style={styles.ruleList}>
+            {pkg.structural_rules.map((rule, i) => (
+              <li key={i} style={styles.ruleItem}>
+                {rule}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {pkg.avoid?.length > 0 && (
+        <div style={styles.packageSection}>
+          <h3 style={{ ...styles.packageLabel, color: "#9B2C2C" }}>AVOID</h3>
+          <ul style={styles.ruleList}>
+            {pkg.avoid.map((item, i) => (
+              <li key={i} style={{ ...styles.ruleItem, color: "#9B2C2C" }}>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ============================================================================
 // PAGE COMPONENT
@@ -119,7 +212,8 @@ const OUTPUT_LABELS = {
 
 export default function NucleusDemo() {
   const [activeLane, setActiveLane] = useState("built_for_this");
-  const [activeRequestId, setActiveRequestId] = useState(null);
+  const [inputText, setInputText] = useState("");
+  const [submittedText, setSubmittedText] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -127,23 +221,19 @@ export default function NucleusDemo() {
   const activeComponents = result?.intent?.activated_components || [];
   const activeComponentKeys = activeComponents.map((c) => c.component);
 
-  const handleRequestClick = useCallback(
-    async (req) => {
-      if (loading) return;
+  const handleSubmit = useCallback(
+    async (e) => {
+      e?.preventDefault();
+      if (loading || !inputText.trim()) return;
 
-      setActiveRequestId(req.id);
+      setSubmittedText(inputText.trim());
       setLoading(true);
       setError(null);
       setResult(null);
 
-      // Use the toggle's current lane, not the request's default
       const payload = {
-        request_text: req.request_text,
-        output_type: req.output_type,
+        request_text: inputText.trim(),
         platform_lane: activeLane,
-        audience: req.audience,
-        channel: req.channel,
-        sku: req.sku,
       };
 
       try {
@@ -166,17 +256,17 @@ export default function NucleusDemo() {
         setLoading(false);
       }
     },
-    [activeLane, loading]
+    [activeLane, loading, inputText]
   );
 
-  const activeRequest = DEMO_REQUESTS.find((r) => r.id === activeRequestId);
   const laneLabel =
     activeLane === "yes_you_can_chef" ? "Yes You Can Chef" : "Built For This";
-  const laneColor =
-    activeLane === "yes_you_can_chef" ? C.green : C.amber;
+  const laneColor = activeLane === "yes_you_can_chef" ? C.green : C.amber;
+
+  const pkg = result?.context_package;
 
   return (
-    <div style={{ ...styles.page }}>
+    <div style={styles.page}>
       {/* ================================================================ */}
       {/* TOP BAR */}
       {/* ================================================================ */}
@@ -268,19 +358,22 @@ export default function NucleusDemo() {
           </div>
         </aside>
 
-        {/* RIGHT PANEL — Request, Output, Reasoning */}
+        {/* RIGHT PANEL */}
         <main style={styles.mainPanel}>
-          {/* REQUEST SECTION */}
-          <section style={styles.requestSection}>
+          {/* INPUT SECTION */}
+          <section style={styles.inputSection}>
             <h2 style={styles.sectionLabel}>REQUEST</h2>
-            {activeRequest ? (
-              <>
-                <p style={styles.requestText}>{activeRequest.request_text}</p>
-                <div style={styles.metadataPills}>
-                  <span style={styles.pill}>
-                    {OUTPUT_LABELS[activeRequest.output_type] ||
-                      activeRequest.output_type}
-                  </span>
+            <form onSubmit={handleSubmit} style={styles.inputForm}>
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Describe what you need — a Reddit post, a video brief, a social caption, or anything else. Include the audience, channel, and product if relevant."
+                style={styles.textarea}
+                rows={4}
+                disabled={loading}
+              />
+              <div style={styles.inputControls}>
+                <div style={styles.lanePillDisplay}>
                   <span
                     style={{
                       ...styles.pill,
@@ -290,25 +383,29 @@ export default function NucleusDemo() {
                   >
                     {laneLabel}
                   </span>
-                  <span style={styles.pill}>{activeRequest.channel}</span>
-                  <span style={styles.pill}>{activeRequest.sku}</span>
                 </div>
-              </>
-            ) : (
-              <p style={styles.placeholder}>
-                Select a request below to activate the Nucleus.
-              </p>
-            )}
+                <button
+                  type="submit"
+                  disabled={loading || !inputText.trim()}
+                  style={{
+                    ...styles.submitButton,
+                    opacity: loading || !inputText.trim() ? 0.5 : 1,
+                  }}
+                >
+                  {loading ? "Processing..." : "Run through Nucleus"}
+                </button>
+              </div>
+            </form>
           </section>
 
-          {/* OUTPUT SECTION */}
+          {/* CONTEXT PACKAGE OUTPUT */}
           <section style={styles.outputSection}>
             <h2 style={styles.sectionLabel}>
-              OUTPUT
-              {result && (
+              CONTEXT PACKAGE
+              {result?.intent?.output_type && (
                 <span style={styles.outputTypeLabel}>
                   {" "}
-                  — {OUTPUT_LABELS[result.intent?.output_type] || ""}
+                  — {result.intent.output_type.replace(/_/g, " ").toUpperCase()}
                 </span>
               )}
             </h2>
@@ -330,17 +427,12 @@ export default function NucleusDemo() {
                 </div>
               ) : error ? (
                 <p style={styles.errorText}>{error}</p>
-              ) : result ? (
-                <div style={styles.outputContent}>
-                  {result.output.split("\n").map((line, i) => (
-                    <p key={i} style={styles.outputLine}>
-                      {line || "\u00A0"}
-                    </p>
-                  ))}
-                </div>
+              ) : pkg ? (
+                <ContextPackageDisplay pkg={pkg} />
               ) : (
                 <p style={styles.placeholderMuted}>
-                  Output will appear here.
+                  Enter a request and run it through the Nucleus to see the
+                  brand context package.
                 </p>
               )}
             </div>
@@ -351,9 +443,9 @@ export default function NucleusDemo() {
             <h2 style={{ ...styles.sectionLabel, color: C.green }}>
               REASONING TRACE
             </h2>
-            {result ? (
+            {pkg ? (
               <>
-                <p style={styles.reasoningText}>{result.reasoning_trace}</p>
+                <p style={styles.reasoningText}>{pkg.reasoning_trace}</p>
                 <div style={styles.activatedChips}>
                   {activeComponents.map((c) => (
                     <span key={c.component} style={styles.chip}>
@@ -369,35 +461,18 @@ export default function NucleusDemo() {
               </p>
             )}
           </section>
-
-          {/* DEMO CONTROLS */}
-          <div style={styles.demoControls}>
-            {DEMO_REQUESTS.map((req) => (
-              <button
-                key={req.id}
-                onClick={() => handleRequestClick(req)}
-                disabled={loading}
-                style={{
-                  ...styles.requestButton,
-                  ...(activeRequestId === req.id
-                    ? styles.requestButtonActive
-                    : {}),
-                  opacity: loading ? 0.6 : 1,
-                }}
-              >
-                <span style={styles.requestButtonLabel}>{req.label}</span>
-                <span style={styles.requestButtonSub}>{req.subtitle}</span>
-              </button>
-            ))}
-          </div>
         </main>
       </div>
 
-      {/* KEYFRAMES for loading animation */}
+      {/* KEYFRAMES */}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 0.3; }
           50% { opacity: 1; }
+        }
+        textarea:focus {
+          outline: none;
+          border-color: ${C.green} !important;
         }
       `}</style>
     </div>
@@ -410,8 +485,7 @@ export default function NucleusDemo() {
 
 const styles = {
   page: {
-    fontFamily:
-      '-apple-system, "Segoe UI", Arial, Helvetica, sans-serif',
+    fontFamily: '-apple-system, "Segoe UI", Arial, Helvetica, sans-serif',
     background: C.bg,
     minHeight: "100vh",
     color: C.textPrimary,
@@ -553,23 +627,51 @@ const styles = {
     gap: 20,
   },
 
-  // REQUEST
-  requestSection: {
+  // INPUT
+  inputSection: {
     background: C.cardBg,
     border: `1px solid ${C.cardBorder}`,
     borderRadius: 6,
     padding: "18px 22px",
   },
-  requestText: {
+  inputForm: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  },
+  textarea: {
+    width: "100%",
+    padding: "12px 14px",
     fontSize: 15,
     lineHeight: 1.6,
+    fontFamily: "inherit",
     color: C.textPrimary,
-    margin: "0 0 12px 0",
+    background: C.bg,
+    border: `1px solid ${C.cardBorder}`,
+    borderRadius: 4,
+    resize: "vertical",
+    boxSizing: "border-box",
   },
-  metadataPills: {
+  inputControls: {
     display: "flex",
-    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  lanePillDisplay: {
+    display: "flex",
     gap: 8,
+    alignItems: "center",
+  },
+  submitButton: {
+    padding: "10px 24px",
+    fontSize: 13,
+    fontWeight: 600,
+    background: C.green,
+    color: "#fff",
+    border: "none",
+    borderRadius: 4,
+    cursor: "pointer",
+    letterSpacing: "0.02em",
   },
   pill: {
     fontSize: 11,
@@ -579,12 +681,6 @@ const styles = {
     background: "#EEEDEA",
     color: C.textSecondary,
     letterSpacing: "0.02em",
-  },
-  placeholder: {
-    fontSize: 14,
-    color: C.textSecondary,
-    margin: 0,
-    fontStyle: "italic",
   },
 
   // OUTPUT
@@ -603,13 +699,6 @@ const styles = {
     borderRadius: 6,
     padding: "22px 26px",
     minHeight: 200,
-  },
-  outputContent: {},
-  outputLine: {
-    fontSize: 15,
-    lineHeight: 1.7,
-    color: C.textPrimary,
-    margin: "0 0 4px 0",
   },
   loadingState: {
     display: "flex",
@@ -643,6 +732,84 @@ const styles = {
     color: "#BBBBBB",
     margin: 0,
     fontStyle: "italic",
+  },
+
+  // CONTEXT PACKAGE
+  packageGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 20,
+  },
+  packageSection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  packageLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    color: C.green,
+    margin: 0,
+    textTransform: "uppercase",
+    paddingBottom: 4,
+    borderBottom: `1px solid ${C.cardBorder}`,
+  },
+  packageValue: {
+    fontSize: 14,
+    lineHeight: 1.6,
+    color: C.textPrimary,
+    margin: 0,
+  },
+  subFields: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+  },
+  subLabel: {
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: "0.06em",
+    color: C.textSecondary,
+    textTransform: "uppercase",
+    display: "block",
+    marginBottom: 2,
+  },
+  subValue: {
+    fontSize: 13,
+    lineHeight: 1.55,
+    color: C.textPrimary,
+    margin: 0,
+  },
+  tagList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  },
+  tagItem: {
+    fontSize: 12,
+    lineHeight: 1.5,
+    color: C.textPrimary,
+    padding: "6px 10px",
+    background: C.bg,
+    borderRadius: 4,
+    border: `1px solid ${C.cardBorder}`,
+  },
+  tagAnchor: {
+    borderLeft: `3px solid ${C.green}`,
+    background: C.greenLight,
+  },
+  ruleList: {
+    margin: 0,
+    paddingLeft: 16,
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  },
+  ruleItem: {
+    fontSize: 12,
+    lineHeight: 1.5,
+    color: C.textPrimary,
   },
 
   // REASONING
@@ -680,39 +847,5 @@ const styles = {
     fontWeight: 700,
     textTransform: "uppercase",
     opacity: 0.7,
-  },
-
-  // DEMO CONTROLS
-  demoControls: {
-    display: "flex",
-    gap: 12,
-    paddingTop: 8,
-  },
-  requestButton: {
-    flex: 1,
-    padding: "14px 16px",
-    background: C.cardBg,
-    border: `1px solid ${C.cardBorder}`,
-    borderRadius: 6,
-    cursor: "pointer",
-    textAlign: "left",
-    transition: "all 0.2s",
-    display: "flex",
-    flexDirection: "column",
-    gap: 4,
-  },
-  requestButtonActive: {
-    borderColor: C.green,
-    background: C.greenLight,
-  },
-  requestButtonLabel: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: C.textPrimary,
-  },
-  requestButtonSub: {
-    fontSize: 11,
-    color: C.textSecondary,
-    fontWeight: 400,
   },
 };
