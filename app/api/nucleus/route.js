@@ -6,7 +6,6 @@ import { NUCLEUS_KNOWLEDGE } from "../../lib/nucleus-knowledge.js";
  * Handles: code blocks, trailing text, unescaped newlines in strings.
  */
 function extractJSON(text) {
-  // Strip markdown code blocks
   let jsonStr = text;
   if (text.includes("```json")) {
     jsonStr = text.split("```json")[1].split("```")[0];
@@ -15,56 +14,40 @@ function extractJSON(text) {
   }
   jsonStr = jsonStr.trim();
 
-  // First try: direct parse
   try {
     return JSON.parse(jsonStr);
-  } catch (e) {
-    // Fall through to repair
-  }
+  } catch (e) {}
 
-  // Second try: find the outermost { } and parse just that
   const firstBrace = jsonStr.indexOf("{");
   const lastBrace = jsonStr.lastIndexOf("}");
   if (firstBrace !== -1 && lastBrace > firstBrace) {
     const extracted = jsonStr.slice(firstBrace, lastBrace + 1);
     try {
       return JSON.parse(extracted);
-    } catch (e) {
-      // Fall through to repair
-    }
+    } catch (e) {}
   }
 
-  // Third try: fix unescaped newlines inside string values
-  const repaired = jsonStr.replace(
-    /"([^"]*?)"/gs,
-    (match, content) => {
+  const repaired = jsonStr.replace(/"([^"]*?)"/gs, (match, content) => {
+    const fixed = content
+      .replace(/\n/g, "\\n")
+      .replace(/\r/g, "\\r")
+      .replace(/\t/g, "\\t");
+    return `"${fixed}"`;
+  });
+
+  try {
+    return JSON.parse(repaired);
+  } catch (e) {}
+
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    const extracted = jsonStr.slice(firstBrace, lastBrace + 1);
+    const repaired2 = extracted.replace(/"([^"]*?)"/gs, (match, content) => {
       const fixed = content
         .replace(/\n/g, "\\n")
         .replace(/\r/g, "\\r")
         .replace(/\t/g, "\\t");
       return `"${fixed}"`;
-    }
-  );
-
-  try {
-    return JSON.parse(repaired);
-  } catch (e) {
-    // Fall through
-  }
-
-  // Fourth try: same repair on the extracted braces version
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    const extracted = jsonStr.slice(firstBrace, lastBrace + 1);
-    const repaired2 = extracted.replace(
-      /"([^"]*?)"/gs,
-      (match, content) => {
-        const fixed = content
-          .replace(/\n/g, "\\n")
-          .replace(/\r/g, "\\r")
-          .replace(/\t/g, "\\t");
-        return `"${fixed}"`;
-      }
-    );
+    });
     try {
       return JSON.parse(repaired2);
     } catch (e) {
@@ -80,8 +63,7 @@ function extractJSON(text) {
 }
 
 /**
- * System prompt text — separated so we can apply cache_control to it.
- * The knowledge file is static across all requests, making it ideal for prompt caching.
+ * System prompt — separated for cache_control.
  */
 const SYSTEM_PROMPT_TEXT = `You are the Hamilton Beach Brand Nucleus — a brand intelligence system that produces outputs grounded in encoded brand knowledge. You reason from the knowledge encoded below. You do not retrieve keywords. You apply brand logic the way a senior strategist who has lived on this account for years would — not by searching notes, but by having absorbed the brand's gravitational core.
 
@@ -95,24 +77,13 @@ function getClient() {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 }
 
-/**
- * Single unified call: Intent Classification + Brand Context Package
- *
- * Previous architecture used two sequential calls (classify → build package).
- * Merged into one call to cut response time roughly in half.
- * The model classifies intent and builds the context package in a single pass.
- *
- * Prompt caching is enabled on the system prompt via cache_control.
- * The 544-line knowledge file is identical across all requests — on cache hit,
- * the system prompt processing is near-instant.
- */
-async function processRequest(client, requestText, metadata) {
+function buildUserPrompt(requestText, metadata) {
   const laneLabel =
     metadata.platform_lane === "yes_you_can_chef"
       ? "Yes You Can Chef"
       : "Built For This";
 
-  const userPrompt = `Analyze this production request. You will do two things in a single pass:
+  return `Analyze this production request. You will do two things in a single pass:
 
 PART 1 — INTENT CLASSIFICATION: Classify the request and identify which brand components to activate.
 PART 2 — CONTEXT PACKAGE: Using those activated components, assemble a structured brand context package for a downstream satellite tool.
@@ -183,41 +154,21 @@ CONTEXT PACKAGE RULES:
 - structural_rules draws from the satellite spec for this output type.
 - avoid draws from the satellite spec "what must never appear" and THE_FEEL "does not sound like."
 - Be specific and operational. A satellite tool reading this should know exactly what to do and what not to do.`;
-
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 3000,
-    system: [
-      {
-        type: "text",
-        text: SYSTEM_PROMPT_TEXT,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    messages: [{ role: "user", content: userPrompt }],
-  });
-
-  const text = response.content[0].text;
-  const parsed = extractJSON(text);
-
-  // Return the parsed object along with cache performance info
-  const cacheInfo = {
-    input_tokens: response.usage?.input_tokens,
-    output_tokens: response.usage?.output_tokens,
-    cache_creation_input_tokens: response.usage?.cache_creation_input_tokens || 0,
-    cache_read_input_tokens: response.usage?.cache_read_input_tokens || 0,
-  };
-
-  return { parsed, cacheInfo };
 }
 
 /**
  * POST /api/nucleus
- * The product endpoint. Every satellite calls this.
+ * v1.2 — Single-call, prompt caching, streaming.
  *
- * v1.1 — Single-call architecture with prompt caching.
- * Previously two sequential Anthropic calls (~30s). Now one call (~15s).
- * Prompt caching on the 544-line knowledge file saves additional time on cache hits.
+ * The endpoint streams raw text chunks from Anthropic to the client via SSE.
+ * Each chunk is a `data:` line with a JSON payload: { type, text, full_text }.
+ * On completion, a final `data:` line sends { type: "done", result: { intent, context_package, _metadata } }.
+ * On error, { type: "error", error: "..." }.
+ *
+ * Satellites that don't need streaming can still call this endpoint —
+ * they just need to read the SSE stream and grab the "done" event.
+ * For backwards compatibility, if the request includes `"stream": false`,
+ * the endpoint returns a regular JSON response (non-streaming).
  */
 export async function POST(request) {
   try {
@@ -233,31 +184,134 @@ export async function POST(request) {
       );
     }
 
-    const client = getClient();
-
-    const { parsed, cacheInfo } = await processRequest(client, request_text, {
+    const metadata = {
       output_type: output_type || "unknown",
       platform_lane: platform_lane || "built_for_this",
       audience: audience || "unspecified",
       channel: channel || "unspecified",
       sku: sku || "unspecified",
-    });
-
-    // Assemble full response — same shape as before so satellites don't break
-    const response = {
-      intent: parsed.intent,
-      context_package: parsed.context_package,
-      _metadata: {
-        nucleus_version: "1.1",
-        knowledge_version: "v1.0",
-        processed_at: new Date().toISOString(),
-        model: "claude-sonnet-4-6",
-        architecture: "single_call",
-        cache: cacheInfo,
-      },
     };
 
-    return Response.json(response);
+    const client = getClient();
+    const userPrompt = buildUserPrompt(request_text, metadata);
+
+    // ================================================================
+    // NON-STREAMING PATH — backwards compatible for satellites
+    // ================================================================
+    if (body.stream === false) {
+      const response = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 3000,
+        system: [
+          {
+            type: "text",
+            text: SYSTEM_PROMPT_TEXT,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+        messages: [{ role: "user", content: userPrompt }],
+      });
+
+      const text = response.content[0].text;
+      const parsed = extractJSON(text);
+
+      return Response.json({
+        intent: parsed.intent,
+        context_package: parsed.context_package,
+        _metadata: {
+          nucleus_version: "1.2",
+          knowledge_version: "v1.0",
+          processed_at: new Date().toISOString(),
+          model: "claude-sonnet-4-6",
+          architecture: "single_call",
+          cache: {
+            input_tokens: response.usage?.input_tokens,
+            output_tokens: response.usage?.output_tokens,
+            cache_creation_input_tokens:
+              response.usage?.cache_creation_input_tokens || 0,
+            cache_read_input_tokens:
+              response.usage?.cache_read_input_tokens || 0,
+          },
+        },
+      });
+    }
+
+    // ================================================================
+    // STREAMING PATH — default for the demo frontend
+    // ================================================================
+    const encoder = new TextEncoder();
+
+    const readable = new ReadableStream({
+      async start(controller) {
+        let fullText = "";
+
+        try {
+          const stream = client.messages.stream({
+            model: "claude-sonnet-4-6",
+            max_tokens: 3000,
+            system: [
+              {
+                type: "text",
+                text: SYSTEM_PROMPT_TEXT,
+                cache_control: { type: "ephemeral" },
+              },
+            ],
+            messages: [{ role: "user", content: userPrompt }],
+          });
+
+          stream.on("text", (text) => {
+            fullText += text;
+            const chunk = JSON.stringify({ type: "chunk", text, full_text: fullText });
+            controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+          });
+
+          // Wait for the stream to finish
+          const finalMessage = await stream.finalMessage();
+
+          // Parse the complete response
+          const parsed = extractJSON(fullText);
+
+          const result = {
+            intent: parsed.intent,
+            context_package: parsed.context_package,
+            _metadata: {
+              nucleus_version: "1.2",
+              knowledge_version: "v1.0",
+              processed_at: new Date().toISOString(),
+              model: "claude-sonnet-4-6",
+              architecture: "single_call_streaming",
+              cache: {
+                input_tokens: finalMessage.usage?.input_tokens,
+                output_tokens: finalMessage.usage?.output_tokens,
+                cache_creation_input_tokens:
+                  finalMessage.usage?.cache_creation_input_tokens || 0,
+                cache_read_input_tokens:
+                  finalMessage.usage?.cache_read_input_tokens || 0,
+              },
+            },
+          };
+
+          const done = JSON.stringify({ type: "done", result });
+          controller.enqueue(encoder.encode(`data: ${done}\n\n`));
+        } catch (err) {
+          const error = JSON.stringify({
+            type: "error",
+            error: err.message || "Nucleus processing failed",
+          });
+          controller.enqueue(encoder.encode(`data: ${error}\n\n`));
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
     console.error("Nucleus error:", error);
     return Response.json(

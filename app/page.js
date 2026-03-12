@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 // ============================================================================
 // COMPONENT DEFINITIONS
@@ -60,6 +60,26 @@ const C = {
   cardBg: "#FFFFFF",
   cardBorder: "#DDDDDD",
 };
+
+// ============================================================================
+// STREAMING STATUS MESSAGES
+// ============================================================================
+
+const STREAM_PHASES = [
+  { threshold: 0, text: "Activating brand knowledge..." },
+  { threshold: 100, text: "Classifying intent..." },
+  { threshold: 300, text: "Reading brand components..." },
+  { threshold: 600, text: "Assembling context package..." },
+  { threshold: 1200, text: "Grounding in brand truth..." },
+];
+
+function getStreamPhase(charCount) {
+  let phase = STREAM_PHASES[0].text;
+  for (const p of STREAM_PHASES) {
+    if (charCount >= p.threshold) phase = p.text;
+  }
+  return phase;
+}
 
 // ============================================================================
 // CONTEXT PACKAGE RENDERER
@@ -215,8 +235,11 @@ export default function NucleusDemo() {
   const [inputText, setInputText] = useState("");
   const [submittedText, setSubmittedText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [streamStatus, setStreamStatus] = useState("");
+  const [streamCharCount, setStreamCharCount] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const abortRef = useRef(null);
 
   const activeComponents = result?.intent?.activated_components || [];
   const activeComponentKeys = activeComponents.map((c) => c.component);
@@ -230,30 +253,80 @@ export default function NucleusDemo() {
       setLoading(true);
       setError(null);
       setResult(null);
+      setStreamCharCount(0);
+      setStreamStatus("Activating brand knowledge...");
 
       const payload = {
         request_text: inputText.trim(),
         platform_lane: activeLane,
       };
 
+      // Abort controller for cancellation
+      const abort = new AbortController();
+      abortRef.current = abort;
+
       try {
         const res = await fetch("/api/nucleus", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
+          signal: abort.signal,
         });
 
         if (!res.ok) {
+          // Non-streaming error response
           const errData = await res.json();
           throw new Error(errData.detail || errData.error || "Request failed");
         }
 
-        const data = await res.json();
-        setResult(data);
+        // Read the SSE stream
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let charCount = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete SSE lines
+          const lines = buffer.split("\n\n");
+          buffer = lines.pop() || ""; // Keep incomplete chunk in buffer
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6);
+
+            try {
+              const event = JSON.parse(jsonStr);
+
+              if (event.type === "chunk") {
+                charCount += event.text.length;
+                setStreamCharCount(charCount);
+                setStreamStatus(getStreamPhase(charCount));
+              } else if (event.type === "done") {
+                setResult(event.result);
+              } else if (event.type === "error") {
+                throw new Error(event.error);
+              }
+            } catch (parseErr) {
+              // If it's a rethrown error from above, propagate it
+              if (parseErr.message && !parseErr.message.includes("JSON")) {
+                throw parseErr;
+              }
+              // Otherwise skip malformed SSE line
+            }
+          }
+        }
       } catch (err) {
-        setError(err.message);
+        if (err.name !== "AbortError") {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
+        abortRef.current = null;
       }
     },
     [activeLane, loading, inputText]
@@ -412,18 +485,15 @@ export default function NucleusDemo() {
             <div style={styles.outputCard}>
               {loading ? (
                 <div style={styles.loadingState}>
-                  <div style={styles.loadingDots}>
-                    <span style={styles.dot}>●</span>
-                    <span style={{ ...styles.dot, animationDelay: "0.2s" }}>
-                      ●
-                    </span>
-                    <span style={{ ...styles.dot, animationDelay: "0.4s" }}>
-                      ●
-                    </span>
+                  <div style={styles.streamProgress}>
+                    <div
+                      style={{
+                        ...styles.streamBar,
+                        width: `${Math.min((streamCharCount / 2000) * 100, 95)}%`,
+                      }}
+                    />
                   </div>
-                  <p style={styles.loadingText}>
-                    Activating brand knowledge...
-                  </p>
+                  <p style={styles.loadingText}>{streamStatus}</p>
                 </div>
               ) : error ? (
                 <p style={styles.errorText}>{error}</p>
@@ -468,6 +538,10 @@ export default function NucleusDemo() {
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+        @keyframes progressGlow {
+          0%, 100% { opacity: 0.7; }
           50% { opacity: 1; }
         }
         textarea:focus {
@@ -706,21 +780,28 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: 180,
-    gap: 12,
+    gap: 16,
   },
-  loadingDots: {
-    display: "flex",
-    gap: 6,
+  streamProgress: {
+    width: "80%",
+    maxWidth: 400,
+    height: 4,
+    background: "#EEEDEA",
+    borderRadius: 2,
+    overflow: "hidden",
   },
-  dot: {
-    fontSize: 18,
-    color: C.green,
-    animation: "pulse 1.2s ease-in-out infinite",
+  streamBar: {
+    height: "100%",
+    background: C.green,
+    borderRadius: 2,
+    transition: "width 0.3s ease",
+    animation: "progressGlow 2s ease-in-out infinite",
   },
   loadingText: {
     fontSize: 14,
     color: C.textSecondary,
     margin: 0,
+    transition: "opacity 0.3s ease",
   },
   errorText: {
     fontSize: 14,
