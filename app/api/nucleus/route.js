@@ -35,7 +35,6 @@ function extractJSON(text) {
   }
 
   // Third try: fix unescaped newlines inside string values
-  // Replace actual newlines between quotes with \\n
   const repaired = jsonStr.replace(
     /"([^"]*?)"/gs,
     (match, content) => {
@@ -69,7 +68,6 @@ function extractJSON(text) {
     try {
       return JSON.parse(repaired2);
     } catch (e) {
-      // Give up with useful error
       throw new Error(
         `JSON parse failed after repair attempts. First 500 chars: ${jsonStr.slice(0, 500)}`
       );
@@ -81,7 +79,11 @@ function extractJSON(text) {
   );
 }
 
-const SYSTEM_PROMPT = `You are the Hamilton Beach Brand Nucleus — a brand intelligence system that produces outputs grounded in encoded brand knowledge. You reason from the knowledge encoded below. You do not retrieve keywords. You apply brand logic the way a senior strategist who has lived on this account for years would — not by searching notes, but by having absorbed the brand's gravitational core.
+/**
+ * System prompt text — separated so we can apply cache_control to it.
+ * The knowledge file is static across all requests, making it ideal for prompt caching.
+ */
+const SYSTEM_PROMPT_TEXT = `You are the Hamilton Beach Brand Nucleus — a brand intelligence system that produces outputs grounded in encoded brand knowledge. You reason from the knowledge encoded below. You do not retrieve keywords. You apply brand logic the way a senior strategist who has lived on this account for years would — not by searching notes, but by having absorbed the brand's gravitational core.
 
 The knowledge encoded below is structured in named slots. Each slot is a component of the brand's identity, behavior, or operational context. When processing a request, you activate the most relevant slots and use them to shape your output.
 
@@ -94,149 +96,133 @@ function getClient() {
 }
 
 /**
- * Call 1: Intent Classification
- * Takes raw request + metadata, returns structured intent object
+ * Single unified call: Intent Classification + Brand Context Package
+ *
+ * Previous architecture used two sequential calls (classify → build package).
+ * Merged into one call to cut response time roughly in half.
+ * The model classifies intent and builds the context package in a single pass.
+ *
+ * Prompt caching is enabled on the system prompt via cache_control.
+ * The 544-line knowledge file is identical across all requests — on cache hit,
+ * the system prompt processing is near-instant.
  */
-async function classifyIntent(client, requestText, metadata) {
-  const userPrompt = `Analyze this production request and return a structured intent classification as JSON.
+async function processRequest(client, requestText, metadata) {
+  const laneLabel =
+    metadata.platform_lane === "yes_you_can_chef"
+      ? "Yes You Can Chef"
+      : "Built For This";
+
+  const userPrompt = `Analyze this production request. You will do two things in a single pass:
+
+PART 1 — INTENT CLASSIFICATION: Classify the request and identify which brand components to activate.
+PART 2 — CONTEXT PACKAGE: Using those activated components, assemble a structured brand context package for a downstream satellite tool.
 
 REQUEST TEXT:
 ${requestText}
 
 DECLARED METADATA:
 - Output type: ${metadata.output_type}
-- Platform lane: ${metadata.platform_lane}
+- Platform lane: ${metadata.platform_lane} (${laneLabel})
 - Audience: ${metadata.audience}
 - Channel: ${metadata.channel}
 - SKU: ${metadata.sku}
 
-Your task:
-1. Confirm or refine the declared metadata based on the request text
-2. Identify which of the six Brand Center components (THE_HUMAN, THE_JOB, THE_PROOF, THE_ANCHORS, THE_FEEL, THE_STORY) are most relevant to this specific request — activate 2-4 components, not all six
-3. Explain WHY those components activated — what in the request triggered them
-4. Explain how the declared platform lane shapes this specific output
-
 Return ONLY valid JSON matching this exact schema:
+
 {
-  "output_type": "reddit_post | video_brief | social_caption",
-  "platform_lane": "yes_you_can_chef | built_for_this",
-  "audience": "string — refined audience description",
-  "channel": "string — specific channel context",
-  "sku": "string",
-  "activated_components": [
-    { "component": "THE_HUMAN", "confidence": "high | medium | low" },
-    { "component": "THE_ANCHORS", "confidence": "high | medium | low" }
-  ],
-  "activation_reasoning": "string — 2-3 sentences explaining why these specific components activated for this request. Be specific about what in the request maps to what in the knowledge.",
-  "lane_reasoning": "string — 1-2 sentences explaining how the platform lane shapes the output approach for this specific request."
+  "intent": {
+    "output_type": "reddit_post | video_brief | social_caption | creative_brief",
+    "platform_lane": "yes_you_can_chef | built_for_this",
+    "audience": "string — refined audience description based on request text",
+    "channel": "string — specific channel context",
+    "sku": "string",
+    "activated_components": [
+      { "component": "THE_HUMAN", "confidence": "high | medium | low" },
+      { "component": "THE_ANCHORS", "confidence": "high | medium | low" }
+    ],
+    "activation_reasoning": "2-3 sentences explaining why these specific components activated. Reference specific elements from both the request AND the encoded knowledge.",
+    "lane_reasoning": "1-2 sentences explaining how the platform lane shapes the output approach."
+  },
+  "context_package": {
+    "satellite_type": "string — the output_type from intent",
+    "objective": "One sentence: what should the final output accomplish for this specific audience in this specific channel?",
+    "audience_context": {
+      "who": "Specific description of the person this is for — draw from THE_HUMAN",
+      "mindset": "What they are thinking/feeling right now — draw from the consumer behavior phase that matches",
+      "what_they_need": "What this person needs to hear or feel — not what the brand wants to say"
+    },
+    "tone_direction": {
+      "lane": "${laneLabel}",
+      "register": "2-3 adjectives for the specific emotional register",
+      "sounds_like": "One sentence — what the voice should sound like, be specific",
+      "does_not_sound_like": "One sentence — what to avoid, specific to this lane and channel"
+    },
+    "content_inputs": {
+      "primary_message": "The core thing the output needs to communicate",
+      "product_context": "What is true and relevant about this product — draw from THE_PROOF and product knowledge",
+      "use_cases": ["Specific real-life use cases — draw from product knowledge and THE_JOB"],
+      "proof_points": ["Specific facts, stats, or heritage points — only what is documented"],
+      "anchors_to_apply": ["Which brand anchors from THE_ANCHORS should shape this output and how"]
+    },
+    "structural_rules": ["3-5 specific rules for output structure — draw from satellite spec for this output type"],
+    "avoid": ["3-5 specific things the output must NOT do — draw from satellite spec, lane rules, and brand anchors"],
+    "reasoning_trace": "2-3 sentences explaining how you assembled this package — what you drew from which components and why."
+  }
 }
 
-Rules:
-- activated_components should contain 2-4 entries, ordered by relevance
-- confidence should reflect how central each component is to THIS specific request
-- activation_reasoning must reference specific elements from both the request AND the encoded knowledge
-- Do not activate components just because they exist — only activate what this request genuinely needs`;
+INTENT RULES:
+- activated_components: 2-4 entries, ordered by relevance. Only activate what this request genuinely needs.
+- confidence reflects how central each component is to THIS specific request.
+- activation_reasoning must reference specific elements from both the request AND the encoded knowledge.
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1500,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: userPrompt }],
-  });
-
-  const text = response.content[0].text;
-  return extractJSON(text);
-}
-
-/**
- * Call 2: Brand Context Package
- * Takes intent object, produces a structured context package that a downstream
- * satellite tool would consume to do its specific job (write copy, build a brief, etc.)
- * The Nucleus is the intelligence layer, not the copywriter.
- */
-async function buildContextPackage(client, intentObject, requestText) {
-  const componentList = intentObject.activated_components
-    .map((c) => `${c.component} (${c.confidence})`)
-    .join(", ");
-
-  const laneLabel =
-    intentObject.platform_lane === "yes_you_can_chef"
-      ? "Yes You Can Chef"
-      : "Built For This";
-
-  const userPrompt = `You are producing a brand context package for a downstream satellite tool. You are NOT writing the final content. You are assembling the brand intelligence, audience context, tone direction, and structural guidance that a satellite tool needs to do its job well.
-
-ORIGINAL REQUEST:
-${requestText}
-
-INTENT CLASSIFICATION:
-- Output type: ${intentObject.output_type}
-- Platform lane: ${laneLabel}
-- Audience: ${intentObject.audience}
-- Channel: ${intentObject.channel}
-- SKU: ${intentObject.sku}
-- Activated components: ${componentList}
-- Activation reasoning: ${intentObject.activation_reasoning}
-- Lane reasoning: ${intentObject.lane_reasoning}
-
-Your task: Read the activated components from the encoded knowledge and produce a structured context package. Extract the specific knowledge a satellite needs — not everything, just what is relevant to THIS request. Be concrete and operational, not abstract.
-
-Return ONLY valid JSON matching this schema:
-{
-  "satellite_type": "${intentObject.output_type}",
-  "objective": "One sentence: what should the final output accomplish for this specific audience in this specific channel?",
-  "audience_context": {
-    "who": "Specific description of the person this is for, drawn from THE_HUMAN",
-    "mindset": "What they are thinking/feeling right now in their journey — draw from the consumer behavior phase that matches",
-    "what_they_need": "What this person needs to hear or feel from this content — not what the brand wants to say"
-  },
-  "tone_direction": {
-    "lane": "${laneLabel}",
-    "register": "2-3 adjectives that describe the specific emotional register for this output",
-    "sounds_like": "One sentence describing what the voice should sound like — be specific",
-    "does_not_sound_like": "One sentence describing what to avoid — be specific to this lane and channel"
-  },
-  "content_inputs": {
-    "primary_message": "The core thing the output needs to communicate",
-    "product_context": "What is true and relevant about this product for this request — draw from THE_PROOF and product knowledge",
-    "use_cases": ["Specific real-life use cases relevant to this request — draw from product knowledge and THE_JOB"],
-    "proof_points": ["Specific facts, stats, or heritage points to ground the output — only what is documented"],
-    "anchors_to_apply": ["Which brand anchors from THE_ANCHORS should shape this specific output and how"]
-  },
-  "structural_rules": ["3-5 specific rules for how the output should be structured — draw from the satellite spec for this output type in the knowledge file"],
-  "avoid": ["3-5 specific things the output must NOT do — draw from the satellite spec, lane rules, and brand anchors"],
-  "reasoning_trace": "2-3 sentences explaining how you assembled this package — what you drew from which components and why. Be concrete."
-}
-
-Rules:
+CONTEXT PACKAGE RULES:
 - Every field must trace back to something in the encoded knowledge. Do not invent.
-- audience_context should draw from THE_HUMAN and the relevant consumer behavior phase.
-- tone_direction should draw from THE_FEEL and the specific platform lane.
-- content_inputs should draw from THE_PROOF, THE_JOB, THE_ANCHORS, and product knowledge.
-- structural_rules should draw from the satellite spec for this output type.
-- avoid should draw from the satellite spec "what must never appear" and THE_FEEL "does not sound like."
+- audience_context draws from THE_HUMAN and the relevant consumer behavior phase.
+- tone_direction draws from THE_FEEL and the specific platform lane.
+- content_inputs draws from THE_PROOF, THE_JOB, THE_ANCHORS, and product knowledge.
+- structural_rules draws from the satellite spec for this output type.
+- avoid draws from the satellite spec "what must never appear" and THE_FEEL "does not sound like."
 - Be specific and operational. A satellite tool reading this should know exactly what to do and what not to do.`;
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 2500,
-    system: SYSTEM_PROMPT,
+    max_tokens: 3000,
+    system: [
+      {
+        type: "text",
+        text: SYSTEM_PROMPT_TEXT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [{ role: "user", content: userPrompt }],
   });
 
   const text = response.content[0].text;
-  return extractJSON(text);
+  const parsed = extractJSON(text);
+
+  // Return the parsed object along with cache performance info
+  const cacheInfo = {
+    input_tokens: response.usage?.input_tokens,
+    output_tokens: response.usage?.output_tokens,
+    cache_creation_input_tokens: response.usage?.cache_creation_input_tokens || 0,
+    cache_read_input_tokens: response.usage?.cache_read_input_tokens || 0,
+  };
+
+  return { parsed, cacheInfo };
 }
 
 /**
  * POST /api/nucleus
  * The product endpoint. Every satellite calls this.
+ *
+ * v1.1 — Single-call architecture with prompt caching.
+ * Previously two sequential Anthropic calls (~30s). Now one call (~15s).
+ * Prompt caching on the 544-line knowledge file saves additional time on cache hits.
  */
 export async function POST(request) {
   try {
     const body = await request.json();
 
-    // Validate required fields
     const { request_text, output_type, platform_lane, audience, channel, sku } =
       body;
 
@@ -249,8 +235,7 @@ export async function POST(request) {
 
     const client = getClient();
 
-    // Call 1: Intent Classification
-    const intentObject = await classifyIntent(client, request_text, {
+    const { parsed, cacheInfo } = await processRequest(client, request_text, {
       output_type: output_type || "unknown",
       platform_lane: platform_lane || "built_for_this",
       audience: audience || "unspecified",
@@ -258,22 +243,17 @@ export async function POST(request) {
       sku: sku || "unspecified",
     });
 
-    // Call 2: Brand Context Package
-    const contextPackage = await buildContextPackage(
-      client,
-      intentObject,
-      request_text
-    );
-
-    // Assemble full response
+    // Assemble full response — same shape as before so satellites don't break
     const response = {
-      intent: intentObject,
-      context_package: contextPackage,
+      intent: parsed.intent,
+      context_package: parsed.context_package,
       _metadata: {
-        nucleus_version: "1.0",
+        nucleus_version: "1.1",
         knowledge_version: "v1.0",
         processed_at: new Date().toISOString(),
         model: "claude-sonnet-4-6",
+        architecture: "single_call",
+        cache: cacheInfo,
       },
     };
 
