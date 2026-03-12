@@ -196,120 +196,120 @@ export async function POST(request) {
     const userPrompt = buildUserPrompt(request_text, metadata);
 
     // ================================================================
-    // NON-STREAMING PATH — backwards compatible for satellites
+    // STREAMING PATH — opt-in via stream: true (demo frontend)
     // ================================================================
-    if (body.stream === false) {
-      const response = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 3000,
-        system: [
-          {
-            type: "text",
-            text: SYSTEM_PROMPT_TEXT,
-            cache_control: { type: "ephemeral" },
-          },
-        ],
-        messages: [{ role: "user", content: userPrompt }],
+    if (body.stream === true) {
+      const encoder = new TextEncoder();
+
+      const readable = new ReadableStream({
+        async start(controller) {
+          let fullText = "";
+
+          try {
+            const stream = client.messages.stream({
+              model: "claude-sonnet-4-6",
+              max_tokens: 3000,
+              system: [
+                {
+                  type: "text",
+                  text: SYSTEM_PROMPT_TEXT,
+                  cache_control: { type: "ephemeral" },
+                },
+              ],
+              messages: [{ role: "user", content: userPrompt }],
+            });
+
+            stream.on("text", (text) => {
+              fullText += text;
+              const chunk = JSON.stringify({ type: "chunk", text, full_text: fullText });
+              controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+            });
+
+            // Wait for the stream to finish
+            const finalMessage = await stream.finalMessage();
+
+            // Parse the complete response
+            const parsed = extractJSON(fullText);
+
+            const result = {
+              intent: parsed.intent,
+              context_package: parsed.context_package,
+              _metadata: {
+                nucleus_version: "1.2",
+                knowledge_version: "v1.0",
+                processed_at: new Date().toISOString(),
+                model: "claude-sonnet-4-6",
+                architecture: "single_call_streaming",
+                cache: {
+                  input_tokens: finalMessage.usage?.input_tokens,
+                  output_tokens: finalMessage.usage?.output_tokens,
+                  cache_creation_input_tokens:
+                    finalMessage.usage?.cache_creation_input_tokens || 0,
+                  cache_read_input_tokens:
+                    finalMessage.usage?.cache_read_input_tokens || 0,
+                },
+              },
+            };
+
+            const done = JSON.stringify({ type: "done", result });
+            controller.enqueue(encoder.encode(`data: ${done}\n\n`));
+          } catch (err) {
+            const error = JSON.stringify({
+              type: "error",
+              error: err.message || "Nucleus processing failed",
+            });
+            controller.enqueue(encoder.encode(`data: ${error}\n\n`));
+          } finally {
+            controller.close();
+          }
+        },
       });
 
-      const text = response.content[0].text;
-      const parsed = extractJSON(text);
-
-      return Response.json({
-        intent: parsed.intent,
-        context_package: parsed.context_package,
-        _metadata: {
-          nucleus_version: "1.2",
-          knowledge_version: "v1.0",
-          processed_at: new Date().toISOString(),
-          model: "claude-sonnet-4-6",
-          architecture: "single_call",
-          cache: {
-            input_tokens: response.usage?.input_tokens,
-            output_tokens: response.usage?.output_tokens,
-            cache_creation_input_tokens:
-              response.usage?.cache_creation_input_tokens || 0,
-            cache_read_input_tokens:
-              response.usage?.cache_read_input_tokens || 0,
-          },
+      return new Response(readable, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
         },
       });
     }
 
     // ================================================================
-    // STREAMING PATH — default for the demo frontend
+    // JSON PATH — default for satellites and external consumers
     // ================================================================
-    const encoder = new TextEncoder();
-
-    const readable = new ReadableStream({
-      async start(controller) {
-        let fullText = "";
-
-        try {
-          const stream = client.messages.stream({
-            model: "claude-sonnet-4-6",
-            max_tokens: 3000,
-            system: [
-              {
-                type: "text",
-                text: SYSTEM_PROMPT_TEXT,
-                cache_control: { type: "ephemeral" },
-              },
-            ],
-            messages: [{ role: "user", content: userPrompt }],
-          });
-
-          stream.on("text", (text) => {
-            fullText += text;
-            const chunk = JSON.stringify({ type: "chunk", text, full_text: fullText });
-            controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
-          });
-
-          // Wait for the stream to finish
-          const finalMessage = await stream.finalMessage();
-
-          // Parse the complete response
-          const parsed = extractJSON(fullText);
-
-          const result = {
-            intent: parsed.intent,
-            context_package: parsed.context_package,
-            _metadata: {
-              nucleus_version: "1.2",
-              knowledge_version: "v1.0",
-              processed_at: new Date().toISOString(),
-              model: "claude-sonnet-4-6",
-              architecture: "single_call_streaming",
-              cache: {
-                input_tokens: finalMessage.usage?.input_tokens,
-                output_tokens: finalMessage.usage?.output_tokens,
-                cache_creation_input_tokens:
-                  finalMessage.usage?.cache_creation_input_tokens || 0,
-                cache_read_input_tokens:
-                  finalMessage.usage?.cache_read_input_tokens || 0,
-              },
-            },
-          };
-
-          const done = JSON.stringify({ type: "done", result });
-          controller.enqueue(encoder.encode(`data: ${done}\n\n`));
-        } catch (err) {
-          const error = JSON.stringify({
-            type: "error",
-            error: err.message || "Nucleus processing failed",
-          });
-          controller.enqueue(encoder.encode(`data: ${error}\n\n`));
-        } finally {
-          controller.close();
-        }
-      },
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 3000,
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT_TEXT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{ role: "user", content: userPrompt }],
     });
 
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+    const text = response.content[0].text;
+    const parsed = extractJSON(text);
+
+    return Response.json({
+      intent: parsed.intent,
+      context_package: parsed.context_package,
+      _metadata: {
+        nucleus_version: "1.2",
+        knowledge_version: "v1.0",
+        processed_at: new Date().toISOString(),
+        model: "claude-sonnet-4-6",
+        architecture: "single_call",
+        cache: {
+          input_tokens: response.usage?.input_tokens,
+          output_tokens: response.usage?.output_tokens,
+          cache_creation_input_tokens:
+            response.usage?.cache_creation_input_tokens || 0,
+          cache_read_input_tokens:
+            response.usage?.cache_read_input_tokens || 0,
+        },
       },
     });
   } catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 // ============================================================================
 // COMPONENT DEFINITIONS
@@ -62,23 +62,38 @@ const C = {
 };
 
 // ============================================================================
-// STREAMING STATUS MESSAGES
+// STREAMING STATUS — timer-based, not token-based
 // ============================================================================
 
 const STREAM_PHASES = [
-  { threshold: 0, text: "Activating brand knowledge..." },
-  { threshold: 100, text: "Classifying intent..." },
-  { threshold: 300, text: "Reading brand components..." },
-  { threshold: 600, text: "Assembling context package..." },
-  { threshold: 1200, text: "Grounding in brand truth..." },
+  "Activating brand knowledge...",
+  "Classifying intent...",
+  "Reading brand components...",
+  "Assembling context package...",
+  "Grounding in brand truth...",
+  "Extracting audience context...",
+  "Calibrating tone direction...",
+  "Mapping proof points...",
+  "Applying brand anchors...",
+  "Finalizing context package...",
 ];
 
-function getStreamPhase(charCount) {
-  let phase = STREAM_PHASES[0].text;
-  for (const p of STREAM_PHASES) {
-    if (charCount >= p.threshold) phase = p.text;
-  }
-  return phase;
+function useRotatingStatus(isActive) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isActive) {
+      setIndex(0);
+      return;
+    }
+    // First phase shows immediately, then rotate every 4 seconds
+    const interval = setInterval(() => {
+      setIndex((prev) => Math.min(prev + 1, STREAM_PHASES.length - 1));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isActive]);
+
+  return STREAM_PHASES[index];
 }
 
 // ============================================================================
@@ -235,11 +250,11 @@ export default function NucleusDemo() {
   const [inputText, setInputText] = useState("");
   const [submittedText, setSubmittedText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [streamStatus, setStreamStatus] = useState("");
-  const [streamCharCount, setStreamCharCount] = useState(0);
+  const [streaming, setStreaming] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const abortRef = useRef(null);
+  const streamStatus = useRotatingStatus(streaming);
 
   const activeComponents = result?.intent?.activated_components || [];
   const activeComponentKeys = activeComponents.map((c) => c.component);
@@ -251,14 +266,14 @@ export default function NucleusDemo() {
 
       setSubmittedText(inputText.trim());
       setLoading(true);
+      setStreaming(true);
       setError(null);
       setResult(null);
-      setStreamCharCount(0);
-      setStreamStatus("Activating brand knowledge...");
 
       const payload = {
         request_text: inputText.trim(),
         platform_lane: activeLane,
+        stream: true,
       };
 
       // Abort controller for cancellation
@@ -303,9 +318,7 @@ export default function NucleusDemo() {
               const event = JSON.parse(jsonStr);
 
               if (event.type === "chunk") {
-                charCount += event.text.length;
-                setStreamCharCount(charCount);
-                setStreamStatus(getStreamPhase(charCount));
+                // Stream is alive — status rotation is timer-based
               } else if (event.type === "done") {
                 setResult(event.result);
               } else if (event.type === "error") {
@@ -326,6 +339,7 @@ export default function NucleusDemo() {
         }
       } finally {
         setLoading(false);
+        setStreaming(false);
         abortRef.current = null;
       }
     },
@@ -485,15 +499,12 @@ export default function NucleusDemo() {
             <div style={styles.outputCard}>
               {loading ? (
                 <div style={styles.loadingState}>
-                  <div style={styles.streamProgress}>
-                    <div
-                      style={{
-                        ...styles.streamBar,
-                        width: `${Math.min((streamCharCount / 2000) * 100, 95)}%`,
-                      }}
-                    />
+                  <div style={styles.loadingDots}>
+                    <span style={styles.dot}>●</span>
+                    <span style={{ ...styles.dot, animationDelay: "0.2s" }}>●</span>
+                    <span style={{ ...styles.dot, animationDelay: "0.4s" }}>●</span>
                   </div>
-                  <p style={styles.loadingText}>{streamStatus}</p>
+                  <p style={styles.loadingText} key={streamStatus}>{streamStatus}</p>
                 </div>
               ) : error ? (
                 <p style={styles.errorText}>{error}</p>
@@ -540,9 +551,9 @@ export default function NucleusDemo() {
           0%, 100% { opacity: 0.3; }
           50% { opacity: 1; }
         }
-        @keyframes progressGlow {
-          0%, 100% { opacity: 0.7; }
-          50% { opacity: 1; }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         textarea:focus {
           outline: none;
@@ -780,28 +791,22 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: 180,
-    gap: 16,
+    gap: 14,
   },
-  streamProgress: {
-    width: "80%",
-    maxWidth: 400,
-    height: 4,
-    background: "#EEEDEA",
-    borderRadius: 2,
-    overflow: "hidden",
+  loadingDots: {
+    display: "flex",
+    gap: 6,
   },
-  streamBar: {
-    height: "100%",
-    background: C.green,
-    borderRadius: 2,
-    transition: "width 0.3s ease",
-    animation: "progressGlow 2s ease-in-out infinite",
+  dot: {
+    fontSize: 18,
+    color: C.green,
+    animation: "pulse 1.2s ease-in-out infinite",
   },
   loadingText: {
     fontSize: 14,
     color: C.textSecondary,
     margin: 0,
-    transition: "opacity 0.3s ease",
+    animation: "fadeIn 0.5s ease",
   },
   errorText: {
     fontSize: 14,
