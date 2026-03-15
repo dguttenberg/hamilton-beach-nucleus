@@ -86,7 +86,6 @@ function useRotatingStatus(isActive) {
       setIndex(0);
       return;
     }
-    // First phase shows immediately, then rotate every 4 seconds
     const interval = setInterval(() => {
       setIndex((prev) => Math.min(prev + 1, STREAM_PHASES.length - 1));
     }, 4000);
@@ -94,6 +93,27 @@ function useRotatingStatus(isActive) {
   }, [isActive]);
 
   return STREAM_PHASES[index];
+}
+
+function useTypewriter(text, isActive, speed = 30) {
+  const [displayed, setDisplayed] = useState("");
+
+  useEffect(() => {
+    if (!isActive || !text) {
+      setDisplayed("");
+      return;
+    }
+    let i = 0;
+    setDisplayed("");
+    const interval = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) clearInterval(interval);
+    }, speed);
+    return () => clearInterval(interval);
+  }, [text, isActive, speed]);
+
+  return displayed;
 }
 
 // ============================================================================
@@ -255,6 +275,7 @@ export default function NucleusDemo() {
   const [error, setError] = useState(null);
   const abortRef = useRef(null);
   const streamStatus = useRotatingStatus(streaming);
+  const typewriterText = useTypewriter(submittedText, loading, 25);
 
   const activeComponents = result?.intent?.activated_components || [];
   const activeComponentKeys = activeComponents.map((c) => c.component);
@@ -499,12 +520,18 @@ export default function NucleusDemo() {
             <div style={styles.outputCard}>
               {loading ? (
                 <div style={styles.loadingState}>
-                  <div style={styles.loadingDots}>
-                    <span style={styles.dot}>●</span>
-                    <span style={{ ...styles.dot, animationDelay: "0.2s" }}>●</span>
-                    <span style={{ ...styles.dot, animationDelay: "0.4s" }}>●</span>
+                  <p style={styles.typewriterText}>
+                    {typewriterText}
+                    <span style={styles.cursor}>|</span>
+                  </p>
+                  <div style={styles.statusRow}>
+                    <div style={styles.loadingDots}>
+                      <span style={styles.dot}>●</span>
+                      <span style={{ ...styles.dot, animationDelay: "0.2s" }}>●</span>
+                      <span style={{ ...styles.dot, animationDelay: "0.4s" }}>●</span>
+                    </div>
+                    <p style={styles.loadingText} key={streamStatus}>{streamStatus}</p>
                   </div>
-                  <p style={styles.loadingText} key={streamStatus}>{streamStatus}</p>
                 </div>
               ) : error ? (
                 <p style={styles.errorText}>{error}</p>
@@ -554,6 +581,10 @@ export default function NucleusDemo() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(4px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
         }
         textarea:focus {
           outline: none;
@@ -788,22 +819,44 @@ const styles = {
   loadingState: {
     display: "flex",
     flexDirection: "column",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     minHeight: 180,
-    gap: 14,
+    gap: 20,
+    padding: "10px 0",
+  },
+  typewriterText: {
+    fontSize: 17,
+    fontStyle: "italic",
+    color: C.textPrimary,
+    lineHeight: 1.6,
+    margin: 0,
+    fontWeight: 400,
+    letterSpacing: "-0.01em",
+  },
+  cursor: {
+    color: C.green,
+    fontWeight: 300,
+    fontStyle: "normal",
+    animation: "blink 0.8s step-end infinite",
+    marginLeft: 1,
+  },
+  statusRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
   },
   loadingDots: {
     display: "flex",
-    gap: 6,
+    gap: 4,
   },
   dot: {
-    fontSize: 18,
+    fontSize: 10,
     color: C.green,
     animation: "pulse 1.2s ease-in-out infinite",
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: 13,
     color: C.textSecondary,
     margin: 0,
     animation: "fadeIn 0.5s ease",

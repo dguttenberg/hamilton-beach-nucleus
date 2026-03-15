@@ -1,7 +1,7 @@
 # Hamilton Beach Brand Nucleus
-## Knowledge File v1.0
-**Last updated:** 2026-03-11
-**Status:** Working draft — platform lane tone rules are PLACEHOLDERS pending creative input
+## Knowledge File v1.1
+**Last updated:** 2026-03-15
+**Status:** Working draft — platform lane tone rules now encoded from Creative Territory Worksheet
 **Build target:** MVP demo prototype, Pitch March 18, 2026
 **Update protocol:** Update slots individually. Each slot has a `last_updated` field and an optional `note` for context behind the change. Do not append — overwrite the slot. Add new pattern memory entries to the bottom of their section with a date stamp.
 
@@ -166,10 +166,10 @@ That ends now. Not by becoming something the brand has never been. By declaring 
 
 ### SLOT: PLATFORM LANE — YES YOU CAN, CHEF
 ```
-last_updated: 2026-03-11
-confidence: MEDIUM
-source: Creative WIP decks, WIP session feedback
-note: Tone rules are PLACEHOLDERS. Carla or creative lead input needed before encoding operationally. Legal review of manifesto language also pending — do not use copy from this lane as final output without clearance.
+last_updated: 2026-03-15
+confidence: HIGH
+source: Creative WIP decks, WIP session feedback, Creative Territory Worksheet (copywriter/AD input)
+note: Tone rules now encoded from creative territory worksheet. Legal review of manifesto language still pending — do not use copy from this lane as final output without clearance.
 legal_flag: YES — manifesto language flagged. Avoid "use appliances any way you want." Focus on what tools enable, not open-ended usage claims.
 ```
 
@@ -177,54 +177,62 @@ legal_flag: YES — manifesto language flagged. Avoid "use appliances any way yo
 
 **Idea:** Encouragement as permission. Everything starts with a yes. The brand is the voice that says "you can do this" before the person knows they can.
 
-**Who it is for:** The Zillennial in the moment before they try. The one who is hesitating. The one who googled "is it okay if..." The one who made something that turned out better than expected and did not know who to tell.
+**Who it is for:** The Zillennial in the moment before they try. They are feeling inspired to get in the kitchen and empowered to cook something they can be proud of. The one who is hesitating. The one who googled "is it okay if..." The one who made something that turned out better than expected and did not know who to tell.
 
-**Visual direction:** Bold green palette. Graphic typography. Social-native energy. Conversational. The aesthetic of someone who knows their stuff without being precious about it.
+**Visual direction:** Bold green palette. Graphic typography. Social-native energy. Conversational. The aesthetic of someone who knows their stuff without being precious about it. The frame always includes a person using a Hamilton Beach appliance in their kitchen, or a delicious piece of food made with Hamilton Beach. Never just the appliance alone. Never too much mess. The emotional register is The Bear — real kitchens, real effort, real pride.
 
-**Tone — [PLACEHOLDER: needs creative input]**
-- Sound-right examples: [TO BE FILLED — bring 5 phrases from Carla]
-- Sound-wrong examples: [TO BE FILLED — bring 5 counter-examples from Carla]
-- Operational tone rules: [TO BE FILLED — 3-5 rules that distinguish this lane from Built For This in actual copy]
+**Tone — Operational Rules**
+
+Rule 1 — Positive and encouraging without being cloying. Enthusiastic but not obnoxious. The default answer to the cook should always be "yes." If a line could be read as bossy, commanding, or condescending, it fails this rule. The brand is a friend giving permission, not a chef giving orders.
+
+Rule 2 — Specific to a food and an action. Copy should name what the person is making and what they are doing. Generality kills the lane — vagueness makes it sound like any brand. The more concrete the cooking activity, the more the line earns its place. A named food plus a named action is the minimum unit of specificity.
+
+Rule 3 — Kitchen activities should be interesting and aspirational without feeling high-end or too culinary. The cooking should feel elevated but reachable — things real people actually make in real kitchens. If it sounds like a cooking school curriculum or a fine dining menu, it is wrong for this territory.
+
+**Voice calibration — how to tell if copy is in-lane vs. out-of-lane:**
+The voice addresses the cook directly with affirmation and specificity. It names a real food, a real action, and says yes to it. The word "chef" is used as encouragement directed at the person — never as a command from an authority figure. Wordplay and energy should emerge from the cooking activity itself, not be imposed on it. Time pressure, unrealistic scenarios, and generic meal language all break the tone. Commands and imperative directives break it — this lane invites, it does not instruct. Copy that could come from a drill sergeant, a cooking show host barking orders, or a motivational poster belongs somewhere else. This lane lives in the space where cooking feels achievable and worth doing.
 
 **Primary channels:** Instagram, TikTok, YouTube, audio — discovery and social stages. Also works at tone level for CRM confidence-building content and UGC amplification.
 
-**What makes this lane distinct from Built For This (conceptual, not yet operational):**
-Yes You Can Chef leads with permission and encouragement. The emotional moment is before the cook tries — the hesitation, the doubt, the "am I allowed to." Built For This leads with the product's versatility and real-life fit. The emotional moment is during or after — the product showing up for a real situation. Chef is about the person becoming. Built For This is about the tool belonging.
+**What makes this lane distinct from Built For This:**
+Yes You Can Chef leads with permission and encouragement. The emotional moment is before the cook tries — the hesitation, the doubt, the "am I allowed to." The person is the protagonist. The product is the enabler. Copy in this lane is about what the person can do. Built For This leads with what the appliance can do. The disambiguator question: are we talking about what the person can do, or what the appliance can do? If the sentence is about the person's capability or aspiration, it belongs here. If it is about the product's capability or versatility, it belongs in Built For This.
 
 ---
 
 ### SLOT: PLATFORM LANE — BUILT FOR THIS
 ```
-last_updated: 2026-03-11
-confidence: MEDIUM-HIGH
-source: Creative WIP decks, WIP session feedback, Amber Miller and Doug validation
-note: Strongest lane for Reddit, LLM-visible content, and AI-powered search. Tone rules are PLACEHOLDERS pending creative input, but format and strategic direction are cleaner than Chef lane.
+last_updated: 2026-03-15
+confidence: HIGH
+source: Creative WIP decks, WIP session feedback, Amber Miller and Doug validation, Creative Territory Worksheet (copywriter/AD input)
+note: Strongest lane for Reddit, LLM-visible content, and AI-powered search. Tone rules now encoded from creative territory worksheet.
 ```
 
 **Insight:** Beginner cooks overspend chasing perfection and aspirational setups. Real improvement comes from having tools that fit real life and then actually using them. Versatility is not a feature — it is proof that the product belongs in a real kitchen.
 
-**Idea:** Dual-use format. "Built for X / Also built for Y." The product reveals itself through both the moment it was designed for and the moment it was not — but showed up for anyway.
+**Idea:** Dual-use format. "Built for X / Also built for Y." The product reveals itself through both the moment it was designed for and the moment it was not — but showed up for anyway. The voice is a confident rally cry to get in the kitchen and cook boldly with Hamilton Beach.
 
-**Who it is for:** The Zillennial who has decided to try but needs the product to prove it belongs. The one who bought it for one thing and found out it does ten others. Starter tools for creative exploration, not aspirational durability.
+**Who it is for:** The Zillennial who has found a new recipe they are excited to try but worried they might not pull it off without fancy equipment. We are telling them they can do it with Hamilton Beach, because it is built for real cooking. The one who bought it for one thing and found out it does ten others. Starter tools for creative exploration, not aspirational durability.
 
 **Format structure (for production):**
-- Hero line: "Built for [primary use case]."
-- Second line: "Also built for [real/adjacent/unexpected use case]."
-- The tension between the two lines is where the product's versatility lives.
-- Example: "Built for Sunday meal prep. Also built for Thursday's unexpected guests."
-- Example: "Built for the recipe. Also built for when you improvise halfway through."
+The core format is the dual-use pairing: "Built for [primary use case]. Also built for [real/adjacent/unexpected use case]." The tension between the two lines is where the product's versatility lives. The first line establishes competence. The second line reveals range — and is usually the more human, surprising, or relatable of the two. Good pairings juxtapose the functional with the emotional, or the expected with the delightful. The format can also expose honest limitations to build credibility — acknowledging what a product is not good at makes the positive claims land harder.
 
-**Visual direction:** Orange/yellow palette. Strong typography. Product and food both present — food as visual hero, product as enabler. Real kitchen environments.
+**Visual direction:** Orange/yellow palette. Strong typography. Product and food both present — food as visual hero, product as enabler. The frame is focused on the appliance and the delicious food it is making or has made. Never showing too much kitchen or lifestyle context. The emotional register is a commercial for a capable truck or an athletic shoe — confidence in what the thing can do, demonstrated through use, not claimed through language.
 
-**Tone — [PLACEHOLDER: needs creative input]**
-- Sound-right examples: [TO BE FILLED — bring 5 phrases from Carla]
-- Sound-wrong examples: [TO BE FILLED — bring 5 counter-examples from Carla]
-- Operational tone rules: [TO BE FILLED — 3-5 rules that distinguish this lane from Yes You Can Chef in actual copy]
+**Tone — Operational Rules**
+
+Rule 1 — The voice comes from Hamilton Beach as a brand — "we are built for this" — but never from a specific appliance in first person. The product does not speak. The brand speaks on behalf of the product's capability. This distinction matters: the brand has conviction, the product has proof.
+
+Rule 2 — Copy should name specific meals or cooking tasks — frying, toasting, blending, simmering — but should always include a modifier or plus-up that makes the activity more interesting or impressive than the bare verb. The cooking task alone is not enough. The modifier is what gives the line personality and keeps it from reading as a spec sheet.
+
+Rule 3 — The voice should not come from human chefs or pretend to be a person cooking. But it can use quoted language to show what a real person would say in the moment — the reaction, the surprise, the relief. Quoted human reactions give the lane warmth without breaking the product-voice frame.
+
+**Voice calibration — how to tell if copy is in-lane vs. out-of-lane:**
+The voice is declarative and confident. It leads with what the product is built for, using gerunds and specific cooking actions. Copy that uses infinitives ("built to spiralize") instead of gerunds ("built for spiralizing") is subtly off — the gerund implies ongoing capability and real use, not a spec-sheet claim. Copy that is vague about the cooking activity ("built for whatever you want") fails — specificity is the price of entry. Copy that describes people in the abstract ("built for people who don't cook much") instead of naming what they are doing ("built for first timers") loses the energy. The lane is active, not descriptive. It names what is happening in the kitchen, not who is standing in it. If the line could appear on packaging for any brand in any category, it is too generic for this lane.
 
 **Primary channels:** Reddit (primary home), AI-visible search content, influencer content, :15 video template, TikTok Shop, Amazon PDP context. The strategic argument: Reddit content functions as LLM training signal. A Reddit presence strategy is simultaneously a media tactic and an LLM visibility play. ChatGPT, Perplexity, and Google AI Overviews all draw from Reddit. Paid Reddit reaches humans today. Reddit content gets HB into the LLM answer when a Zillennial asks what slow cooker to buy six months from now.
 
-**What makes this lane distinct from Yes You Can Chef (conceptual, not yet operational):**
-Built For This leads with the product proving itself in a real situation. The tone is declarative, grounded, almost matter-of-fact. Less warmth, more substance. The product is the protagonist. In Chef, the person is the protagonist and the product is the enabler. In Built For This, the product and the person are co-equal — the product shows up for the life the person is actually living.
+**What makes this lane distinct from Yes You Can Chef:**
+Built For This leads with the product proving itself in a real situation. The tone is declarative, grounded, almost matter-of-fact. Less warmth, more substance. The product and the person are co-equal — the product shows up for the life the person is actually living. In Chef, the person is the protagonist and the product is the enabler. In Built For This, the product is the protagonist. The disambiguator question: are we talking about what the person can do, or what the appliance can do? If the sentence is about the product's capability or versatility, it belongs here. If it is about the person's capability or aspiration, it belongs in Yes You Can Chef.
 
 ---
 
@@ -531,6 +539,14 @@ sku: Slow cooker
 ### Record of Changes by Version
 
 ```
+v1.1 — 2026-03-15
+Platform lane tone rules encoded from Creative Territory Worksheet (copywriter/AD input).
+Both YES YOU CAN CHEF and BUILT FOR THIS slots updated: placeholder tone sections replaced
+with operational rules, voice calibration guidance, and visual direction refinements.
+Tone content encoded as operational styleguide rules, not literal copy examples.
+Lane disambiguator question added to both slots from worksheet "WHERE THEY SPLIT" section.
+Confidence upgraded to HIGH on both platform lane slots.
+
 v1.0 — 2026-03-11
 Built from scratch. Sources: Hamilton Beach creative brief (March 2026), HB 101 doc (December 2025),
 RFI Round 2 assignment brief, chemistry session notes (roles only, no individual names),
