@@ -22,10 +22,10 @@ The system reads this file as grounded truth. It reasons from the encoded conten
 
 ### SLOT: THE HUMAN
 ```
-last_updated: 2026-03-11
+last_updated: 2026-03-15
 confidence: HIGH
-source: Creative brief, deck pp.39-71, HB 101, chemistry session notes
-note: Two distinct audiences. Both live in real kitchens. Encode both.
+source: Creative brief, deck pp.39-71, HB 101, chemistry session notes, LisaAnn Rocha review (Supabase, 2026-03-13/14)
+note: Two distinct audiences. Both live in real kitchens. Encode both. Secondary audience renamed from "The Core" to "Legacy" per LisaAnn feedback. Media habits added for both segments.
 ```
 
 **Primary: The Zillennial Home Cook (25-34)**
@@ -33,12 +33,12 @@ They are in a state of formation. First real apartments or homes that actually f
 
 They are not trying to get a Michelin star. They want dinner. They want to host without a safety net. They want their Sunday reset meals and their "let's do that again" nights. They feel judged by food culture even when cooking only for themselves. The internet shows them marble countertops, immaculate lighting, chef-level tools, beautiful plating — and their kitchen looks nothing like that: four feet of counter space, budget appliances, improvised solutions.
 
-They are not premium-seekers, but they want quality. They are loyal to smart choices, not brands. They shop their way — Amazon reviews, Reddit threads, honest YouTube reviews, asking friends. They are budget-conscious and will compare prices and shipping at the point of purchase. Their decision is not based on brand love. It is based on confidence that the choice is smart.
+They are not premium-seekers, but they want quality. They are loyal to smart choices, not brands. They shop their way — Amazon reviews, Reddit threads, honest YouTube reviews, asking friends, and increasingly through LLM-based search tools like ChatGPT and Perplexity instead of traditional Google search. They are budget-conscious and will compare prices and shipping at the point of purchase. Their decision is not based on brand love. It is based on confidence that the choice is smart. They are cutting-edge in their media ingestion habits — social-first, LLM-assisted, algorithm-fed. The brand needs to show up in cutting-edge formats and placements in order to feel authentic to this audience.
 
 Positive cooking experiences for them are about relief, not achievement. Lower pressure. Feeling capable. Small wins that build momentum.
 
-**Secondary: The Core / Gen X Replacement Buyer (35+)**
-They have made it. They have built their home and their kitchen. They have been cooking for decades and have everything they need. They buy Hamilton Beach as a replacement when something breaks — reliability and everyday practicality are the primary drivers. They choose it because they already know it works. They do not need to be recruited. They need to be respected. "Champion of Real Kitchens" validates what they already believe: their approach to cooking is right.
+**Secondary: The Legacy Buyer (35+)**
+They have made it. They have built their home and their kitchen. They have been cooking for decades and have everything they need. They buy Hamilton Beach as a replacement when something breaks — reliability and everyday practicality are the primary drivers. They choose it because they already know it works. They do not need to be recruited. They need to be respected. "Champion of Real Kitchens" validates what they already believe: their approach to cooking is right. Their media habits straddle two worlds — one foot in traditional media (Food Network, cooking magazines, broadcast) and one foot in newer channels (Facebook recipe reels, Pinterest boards, YouTube how-to content). Their cooking continues to be inspired and their product choices informed through these channels. They are not digital-first but they are digitally present.
 
 ---
 
@@ -58,16 +58,18 @@ Not the kitchen they wish they had. Not a kitchen that looks good on camera. The
 
 ### SLOT: THE PROOF
 ```
-last_updated: 2026-03-11
-confidence: MEDIUM
-source: HB 101, creative brief, chemistry session notes
-note: Heritage and distribution are strong. Product-specific differentiators are thin. Flag for HB team input before encoding final version.
+last_updated: 2026-03-15
+confidence: MEDIUM-HIGH
+source: HB 101, creative brief, chemistry session notes, LisaAnn Rocha review (Supabase, 2026-03-13)
+note: Heritage and distribution are strong. Editorial credibility and innovation heritage added per LisaAnn feedback. Product-specific differentiators still flagged for HB team input.
 ```
 
 **What is true and documented:**
 - Founded 1910. 115 years of continuous presence in American kitchens. This is not heritage as nostalgia — it is proof that the brand has been exactly what real home cooks need for over a century without anyone noticing. That invisibility is now the advantage.
+- A history of category-defining innovation that continues today. Hamilton Beach pioneered and successfully marketed many of the first small kitchen appliances — the company's legacy is not just longevity but repeated invention. This innovation heritage is ongoing, not historical.
 - #1 unit share in small kitchen appliances in the U.S. #2 dollar share (behind Ninja). The brand wins the business without winning the story.
 - Products average ~3.8 out of 5 stars across major retail and review platforms — strong perceived value, ease of use, and reliability at accessible price points. Consistently at or above category norms for value-driven appliances.
+- Many HB products appear on independent editors' "best of" lists across major publications, providing third-party credibility that the products perform at or above their price point. This is earned editorial validation, not paid placement — a proof point that strengthens the "smart choice" narrative.
 - Distribution: Target, Walmart, Home Depot, Lowe's, Amazon, DTC, specialty and regional retailers. Sold where real people actually shop.
 - Previous taglines: "Good Thinking" / "Where Good Thinking and Good Value intersect" — the thinking was always there, it was never surfaced emotionally.
 - 2019 Darling agency work on FlexBrew Trio: "How You Brew Is Up To You." Sold out two weeks before Christmas. Proof that the right emotional framing converts.
@@ -110,10 +112,10 @@ note: These are the themes the brand's world runs on. Every output should be con
 
 ### SLOT: THE FEEL
 ```
-last_updated: 2026-03-11
+last_updated: 2026-03-15
 confidence: HIGH
-source: Creative brief, deck manifesto p.55, creative territory descriptions
-note: This governs tone and sensory register across all outputs. Every satellite should check outputs against this.
+source: Creative brief, deck manifesto p.55, creative territory descriptions, LisaAnn Rocha review (Supabase, 2026-03-13/14)
+note: This governs tone and sensory register across all outputs. Every satellite should check outputs against this. Modern environment presence added per LisaAnn feedback.
 ```
 
 Warm, unpretentious, a little knowing. The friend who already figured it out. Not a brand talking at you from above. Someone standing in the kitchen with you who has been there, made the mistakes, and came out the other side with dinner on the table.
@@ -123,6 +125,8 @@ Not performatively casual. Not trying to be relatable. Actually relatable. The d
 Not motivational. Not celebratory. Steady. Reassuring. The emotional register of relief more than triumph.
 
 Visually (from deck): Real kitchen environments, not staged ones. Food as the visual hero. Imperfect setups. Genuine moments — not posed, not aspirational. Green palette. Bold typography. Social-native energy without feeling like an ad.
+
+The brand needs to feel natural in modern environments — not just in tone, but in where and how it shows up. Social feeds, non-traditional search results, AI-generated snippets, audio soundbites, short-form video. Hamilton Beach should feel native to these spaces, not like a traditional brand that wandered into them. If the brand's presence in a modern channel feels forced, borrowed, or adapted from a TV spot, it is not right yet.
 
 **What this does NOT sound like:**
 - Premium performance language (Ninja, Breville)
@@ -135,16 +139,16 @@ Visually (from deck): Real kitchen environments, not staged ones. Food as the vi
 
 ### SLOT: THE STORY
 ```
-last_updated: 2026-03-11
+last_updated: 2026-03-15
 confidence: PARTIAL
-source: Creative brief, deck pp.50-58, strategic unlock p.74 and p.140
-note: Opening movement is strong and well-sourced. Closing movement is intentionally incomplete — to be built with HB in the room. This is a strategic choice, not a gap.
+source: Creative brief, deck pp.50-58, strategic unlock p.74 and p.140, LisaAnn Rocha review (Supabase, 2026-03-13)
+note: Opening movement is strong and well-sourced. Closing movement is intentionally incomplete — to be built with HB in the room. This is a strategic choice, not a gap. Appliance line softened per LisaAnn feedback to avoid subtly diminishing the products.
 ```
 
 **The opening (encoded):**
 Hamilton Beach has spent 115 years being exactly what the next generation of home cooks needs most. It just has not said so.
 
-The brand has lived quietly in kitchens across America — practical, reliable, easy to trust. Chosen by people who care about cooking more than they care about what their appliances say about them. Trusted by people who know that the food matters more than the kitchen.
+The brand has lived quietly in kitchens across America — practical, reliable, easy to trust. Chosen by people who care about cooking first — about the food on the table, the people around it, the moment it creates. Trusted by people who know that what you make matters more than what you make it with.
 
 While the category filled up with brands selling power, aesthetics, mastery, and aspiration, Hamilton Beach kept doing the same thing it always did: making appliances that work, at a price that makes sense, for kitchens that are actually lived in. Nobody noticed. That was fine.
 
@@ -287,8 +291,9 @@ Channels: TikTok Shop, Walmart shoppable storefront, Amazon PDP, retail media ne
 
 ### SLOT: CONSUMER BEHAVIOR — REAL LIFE / POST-PURCHASE PHASE
 ```
-last_updated: 2026-03-11
-source: Connections strategy, deck p.90 and p.120
+last_updated: 2026-03-15
+source: Connections strategy, deck p.90 and p.120, LisaAnn Rocha review (Supabase, 2026-03-13/14)
+note: Sharing/validation window and 12-month kitchen buildout added per LisaAnn feedback. Post-purchase is now encoded as the highest-leverage brand affinity phase.
 ```
 
 First-use mindset quotes: "Wait, how do I use this?" / "Please don't let me screw this up." / "Is this supposed to do that?" / "Okay, that actually worked."
@@ -296,6 +301,10 @@ First-use mindset quotes: "Wait, how do I use this?" / "Please don't let me scre
 Later-use mindset: "This makes mornings easier." / "This was clutch for brunch." / "Friends liked that smoothie."
 
 They are trying their first recipe, prepping for friends, experimenting with routines. They want to feel capable in the kitchen, enabled by their new appliance. This is where the brand can build a genuine relationship — not through promotions but through building confidence over time.
+
+**The sharing/validation window:** After unboxing, Zillennials enter a critical window of sharing and social validation. This is not optional behavior — it is a core part of how this generation processes a purchase. They record unboxing and first-use content. They message friends about it. They leave reviews. They post UGC showing what they made. They are seeking social approval and confirmation through social channels that they got the right thing. This post-purchase validation loop builds more brand affinity than any advertisement can — it is peer-to-peer proof that the choice was smart. The brand's job is to make this sharing easy, natural, and rewarding.
+
+**The 12-month kitchen buildout:** Zillennials are not buying a full kitchen at once. They are building it out piece by piece over roughly 12 months — one appliance at a time, as needs arise or as confidence grows. Each successful purchase and use experience increases the probability of the next one. This is a compounding loyalty opportunity: the slow cooker leads to the blender leads to the air fryer. The post-purchase phase of one product is the discovery phase of the next.
 
 CRM opportunity: recipes, tips, tricks, shareable starter recipes. #madewithhamiltonbeach UGC loop. Box insert triggering Instacart or Walmart first recipe offer. Target Club integration. Partnership with Instacart or Uber Eats for first recipe on registration. The tone in this phase is especially warm — this is where Yes You Can Chef voice is most at home.
 
@@ -539,6 +548,17 @@ sku: Slow cooker
 ### Record of Changes by Version
 
 ```
+v1.2 — 2026-03-15
+LisaAnn Rocha review feedback encoded from Supabase responses table (submissions 2026-03-13 and 2026-03-14).
+THE HUMAN: Zillennial LLM search behavior added, secondary audience renamed from "The Core" to "Legacy",
+Legacy media habits encoded (traditional + new channels).
+THE PROOF: Innovation heritage and independent editors' picks credibility added. Confidence bumped to MEDIUM-HIGH.
+THE FEEL: Modern environment presence requirement added (social, AI snippets, audio, non-traditional search).
+THE STORY: Softened "appliances say about them" line per feedback to avoid subtly diminishing products.
+POST-PURCHASE: Sharing/validation window and 12-month kitchen buildout encoded as high-leverage affinity phase.
+Items flagged but NOT encoded (need team input): Built For This palette change, focus vs. primary channels
+restructure, per-channel concept expression mapping, Legacy customer line in each lane.
+
 v1.1 — 2026-03-15
 Platform lane tone rules encoded from Creative Territory Worksheet (copywriter/AD input).
 Both YES YOU CAN CHEF and BUILT FOR THIS slots updated: placeholder tone sections replaced

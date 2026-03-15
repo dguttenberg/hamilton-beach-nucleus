@@ -46,6 +46,25 @@ const COMPONENTS = [
 ];
 
 // ============================================================================
+// EXPANDED PROMPT BUILDER — richer text for the typewriter during loading
+// ============================================================================
+
+const LANE_DESCRIPTIONS = {
+  built_for_this:
+    "Built For This — the product-led lane. Declarative, confident, grounded. The voice comes from the brand speaking on behalf of what the product can do. Dual-use format: what it was built for, and what it also showed up for. Specificity is the price of entry.",
+  yes_you_can_chef:
+    "Yes You Can, Chef — the permission lane. Warm, encouraging, person-first. The voice says yes before the cook knows they can. Specific to a food and an action. Aspirational without being high-end. The brand is a friend giving permission, not a chef giving orders.",
+};
+
+function buildExpandedPrompt(requestText, lane) {
+  const laneDesc = LANE_DESCRIPTIONS[lane] || "";
+  const components = COMPONENTS.map((c) => `${c.name}: ${c.summary}`).join(
+    " · "
+  );
+  return `Processing request through the Hamilton Beach Brand Nucleus — "${requestText}" — activating platform lane: ${laneDesc} — scanning six brand components for relevance: ${components} — grounding response in brand truth, audience context, tone direction, and proof points — assembling context package for satellite consumption.`;
+}
+
+// ============================================================================
 // PALETTE
 // ============================================================================
 
@@ -275,7 +294,10 @@ export default function NucleusDemo() {
   const [error, setError] = useState(null);
   const abortRef = useRef(null);
   const streamStatus = useRotatingStatus(streaming);
-  const typewriterText = useTypewriter(submittedText, loading, 25);
+  const expandedPrompt = loading
+    ? buildExpandedPrompt(submittedText, activeLane)
+    : "";
+  const typewriterText = useTypewriter(expandedPrompt, loading, 18);
 
   const activeComponents = result?.intent?.activated_components || [];
   const activeComponentKeys = activeComponents.map((c) => c.component);
