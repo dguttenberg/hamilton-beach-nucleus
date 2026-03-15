@@ -128,6 +128,18 @@ Return ONLY valid JSON matching this exact schema:
       "sounds_like": "One sentence — what the voice should sound like, be specific",
       "does_not_sound_like": "One sentence — what to avoid, specific to this lane and channel"
     },
+    "copy_rules": [
+      "Pass through the 3 operational tone rules from the active platform lane, verbatim from the knowledge file. These are the rules a copywriter applies to every line."
+    ],
+    "voice_calibration": "Pass through the voice calibration guidance from the active platform lane — the in-lane vs. out-of-lane diagnostic. A copywriter reads this to self-check their work.",
+    "format_spec": "The structural format for this lane. For Built For This: the dual-use pairing structure and how to construct good pairings. For Yes You Can Chef: the affirmation-plus-specificity structure. Include enough detail that a writer can produce correct format without seeing the knowledge file.",
+    "art_direction": {
+      "palette": "Color palette for this lane — from the visual direction in the knowledge file",
+      "in_frame": "What should be in the frame — from lane visual direction",
+      "never_in_frame": "What must never appear — from lane visual direction",
+      "emotional_reference": "The emotional register reference — e.g. The Bear, or a capable truck commercial",
+      "product_to_food": "The relationship between product and food in the visual — which is hero, which is enabler"
+    },
     "content_inputs": {
       "primary_message": "The core thing the output needs to communicate",
       "product_context": "What is true and relevant about this product — draw from THE_PROOF and product knowledge",
@@ -136,7 +148,7 @@ Return ONLY valid JSON matching this exact schema:
       "anchors_to_apply": ["Which brand anchors from THE_ANCHORS should shape this output and how"]
     },
     "structural_rules": ["3-5 specific rules for output structure — draw from satellite spec for this output type"],
-    "avoid": ["3-5 specific things the output must NOT do — draw from satellite spec, lane rules, and brand anchors"],
+    "do_not": ["5-7 specific things the output must NOT do — draw from satellite spec 'what must never appear', THE_FEEL 'does not sound like', lane voice calibration out-of-lane signals, and brand anchors. Be concrete and actionable."],
     "reasoning_trace": "2-3 sentences explaining how you assembled this package — what you drew from which components and why."
   }
 }
@@ -150,10 +162,14 @@ CONTEXT PACKAGE RULES:
 - Every field must trace back to something in the encoded knowledge. Do not invent.
 - audience_context draws from THE_HUMAN and the relevant consumer behavior phase.
 - tone_direction draws from THE_FEEL and the specific platform lane.
+- copy_rules: extract the 3 numbered operational tone rules from the active platform lane slot. Pass them through as actionable copywriting rules, not summaries. A copywriter should be able to apply each rule to a line of copy and determine pass/fail.
+- voice_calibration: extract the "how to tell if copy is in-lane vs. out-of-lane" guidance from the active platform lane slot. This is the self-check a copywriter uses after writing.
+- format_spec: extract the format structure from the active platform lane. For Built For This, this is the dual-use pairing format. For Yes You Can Chef, this is the affirmation + specificity format. Include enough structural detail that a writer can produce correct format without access to the knowledge file.
+- art_direction: extract visual direction from the active platform lane — palette, what is in frame, what is never in frame, the emotional reference point, and the product-to-food visual relationship. A creative director or image generation tool should be able to use this to make visual decisions.
 - content_inputs draws from THE_PROOF, THE_JOB, THE_ANCHORS, and product knowledge.
 - structural_rules draws from the satellite spec for this output type.
-- avoid draws from the satellite spec "what must never appear" and THE_FEEL "does not sound like."
-- Be specific and operational. A satellite tool reading this should know exactly what to do and what not to do.`;
+- do_not: combine the satellite spec "what must never appear", THE_FEEL "does not sound like", and the out-of-lane signals from voice calibration into a single concrete list. Each item should be specific enough that a copywriter can check their work against it.
+- Be specific and operational. A satellite tool or copywriting agent reading this package should be able to produce on-brand creative output without any other brand knowledge.`;
 }
 
 /**
@@ -208,7 +224,7 @@ export async function POST(request) {
           try {
             const stream = client.messages.stream({
               model: "claude-sonnet-4-6",
-              max_tokens: 3000,
+              max_tokens: 4000,
               system: [
                 {
                   type: "text",
@@ -235,7 +251,7 @@ export async function POST(request) {
               intent: parsed.intent,
               context_package: parsed.context_package,
               _metadata: {
-                nucleus_version: "1.2",
+                nucleus_version: "1.3",
                 knowledge_version: "v1.0",
                 processed_at: new Date().toISOString(),
                 model: "claude-sonnet-4-6",
@@ -279,7 +295,7 @@ export async function POST(request) {
     // ================================================================
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 3000,
+      max_tokens: 4000,
       system: [
         {
           type: "text",
@@ -297,7 +313,7 @@ export async function POST(request) {
       intent: parsed.intent,
       context_package: parsed.context_package,
       _metadata: {
-        nucleus_version: "1.2",
+        nucleus_version: "1.3",
         knowledge_version: "v1.0",
         processed_at: new Date().toISOString(),
         model: "claude-sonnet-4-6",

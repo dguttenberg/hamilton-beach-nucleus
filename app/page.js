@@ -196,6 +196,61 @@ function ContextPackageDisplay({ pkg }) {
         </div>
       </div>
 
+      {/* Copy Rules */}
+      {pkg.copy_rules?.length > 0 && (
+        <div style={{ ...styles.packageSection, gridColumn: "1 / -1" }}>
+          <h3 style={styles.packageLabel}>COPY RULES</h3>
+          <ul style={styles.ruleList}>
+            {pkg.copy_rules.map((rule, i) => (
+              <li key={i} style={styles.ruleItem}>{rule}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Voice Calibration + Format Spec — side by side */}
+      {pkg.voice_calibration && (
+        <div style={styles.packageSection}>
+          <h3 style={styles.packageLabel}>VOICE CALIBRATION</h3>
+          <p style={styles.packageValue}>{pkg.voice_calibration}</p>
+        </div>
+      )}
+      {pkg.format_spec && (
+        <div style={styles.packageSection}>
+          <h3 style={styles.packageLabel}>FORMAT SPEC</h3>
+          <p style={styles.packageValue}>{pkg.format_spec}</p>
+        </div>
+      )}
+
+      {/* Art Direction */}
+      {pkg.art_direction && (
+        <div style={{ ...styles.packageSection, gridColumn: "1 / -1" }}>
+          <h3 style={styles.packageLabel}>ART DIRECTION</h3>
+          <div style={styles.subFields}>
+            <div>
+              <span style={styles.subLabel}>Palette</span>
+              <p style={styles.subValue}>{pkg.art_direction?.palette}</p>
+            </div>
+            <div>
+              <span style={styles.subLabel}>In frame</span>
+              <p style={styles.subValue}>{pkg.art_direction?.in_frame}</p>
+            </div>
+            <div>
+              <span style={styles.subLabel}>Never in frame</span>
+              <p style={styles.subValue}>{pkg.art_direction?.never_in_frame}</p>
+            </div>
+            <div>
+              <span style={styles.subLabel}>Emotional reference</span>
+              <p style={styles.subValue}>{pkg.art_direction?.emotional_reference}</p>
+            </div>
+            <div>
+              <span style={styles.subLabel}>Product / food relationship</span>
+              <p style={styles.subValue}>{pkg.art_direction?.product_to_food}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content Inputs */}
       <div style={{ ...styles.packageSection, gridColumn: "1 / -1" }}>
         <h3 style={styles.packageLabel}>CONTENT INPUTS</h3>
@@ -264,11 +319,11 @@ function ContextPackageDisplay({ pkg }) {
           </ul>
         </div>
       )}
-      {pkg.avoid?.length > 0 && (
+      {pkg.do_not?.length > 0 && (
         <div style={styles.packageSection}>
-          <h3 style={{ ...styles.packageLabel, color: "#9B2C2C" }}>AVOID</h3>
+          <h3 style={{ ...styles.packageLabel, color: "#9B2C2C" }}>DO NOT</h3>
           <ul style={styles.ruleList}>
-            {pkg.avoid.map((item, i) => (
+            {pkg.do_not.map((item, i) => (
               <li key={i} style={{ ...styles.ruleItem, color: "#9B2C2C" }}>
                 {item}
               </li>
