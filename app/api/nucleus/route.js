@@ -129,16 +129,18 @@ Return ONLY valid JSON matching this exact schema:
       "does_not_sound_like": "One sentence — what to avoid, specific to this lane and channel"
     },
     "copy_rules": [
-      "INSTRUCTION: Return exactly 3 strings — one for each numbered operational tone rule from the active platform lane in the knowledge file. Each rule should be the actual rule content, not a summary or description of what a rule is."
+      "Positive and encouraging without being cloying. Enthusiastic but not obnoxious...",
+      "Specific to a food and an action. Copy should name what the person is making...",
+      "Kitchen activities should be interesting and aspirational without feeling high-end..."
     ],
-    "voice_calibration": "INSTRUCTION: Return the actual voice calibration text from the active platform lane — the passage that starts with how to tell if copy is in-lane vs. out-of-lane. Return the real guidance, not a description of what it does.",
-    "format_spec": "INSTRUCTION: Return the actual format structure from the active platform lane. For Built For This, return the dual-use pairing rules. For Yes You Can Chef, return the affirmation-plus-specificity rules. Use the real content from the knowledge file.",
+    "voice_calibration": "The voice addresses the cook directly with affirmation and specificity. It names a real food, a real action...",
+    "format_spec": "The core format is the dual-use pairing: Built for [primary use case]. Also built for [real/adjacent use case]...",
     "art_direction": {
-      "palette": "INSTRUCTION: Return the actual color palette from the active lane's visual direction — e.g. 'Bold green palette' or 'Orange/yellow palette'",
-      "in_frame": "INSTRUCTION: Return what the lane says should be in the frame — the actual visual direction content",
-      "never_in_frame": "INSTRUCTION: Return what the lane says must never appear in the frame",
-      "emotional_reference": "INSTRUCTION: Return the specific emotional reference from the lane — e.g. 'The Bear' or 'A commercial for a capable truck or athletic shoe'",
-      "product_to_food": "INSTRUCTION: Return the lane's guidance on product vs. food visual hierarchy"
+      "palette": "Orange/yellow palette",
+      "in_frame": "Product and food both present — food as visual hero, product as enabler...",
+      "never_in_frame": "Never showing too much kitchen or lifestyle context...",
+      "emotional_reference": "A commercial for a capable truck or athletic shoe — confidence in what the thing can do...",
+      "product_to_food": "Food as visual hero, product as enabler..."
     },
     "content_inputs": {
       "primary_message": "The core thing the output needs to communicate",
@@ -169,7 +171,8 @@ CONTEXT PACKAGE RULES:
 - content_inputs draws from THE_PROOF, THE_JOB, THE_ANCHORS, and product knowledge.
 - structural_rules draws from the satellite spec for this output type.
 - do_not: combine the satellite spec "what must never appear", THE_FEEL "does not sound like", and the out-of-lane signals from voice calibration into a single concrete list. Each item should be specific enough that a copywriter can check their work against it.
-- Be specific and operational. A satellite tool or copywriting agent reading this package should be able to produce on-brand creative output without any other brand knowledge.`;
+- Be specific and operational. A satellite tool or copywriting agent reading this package should be able to produce on-brand creative output without any other brand knowledge.
+- CRITICAL: Never use the word "PLACEHOLDER" in any output field. Never say a field "has not been encoded" or is "pending creative input." The knowledge file contains all the information you need. Extract the real content from the active platform lane and return it directly. If the knowledge file contains the content, return it. If it genuinely does not exist, omit the field — do not fill it with a placeholder description.`;
 }
 
 /**
