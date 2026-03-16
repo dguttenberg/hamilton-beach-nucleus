@@ -129,16 +129,16 @@ Return ONLY valid JSON matching this exact schema:
       "does_not_sound_like": "One sentence — what to avoid, specific to this lane and channel"
     },
     "copy_rules": [
-      "Pass through the 3 operational tone rules from the active platform lane, verbatim from the knowledge file. These are the rules a copywriter applies to every line."
+      "INSTRUCTION: Return exactly 3 strings — one for each numbered operational tone rule from the active platform lane in the knowledge file. Each rule should be the actual rule content, not a summary or description of what a rule is."
     ],
-    "voice_calibration": "Pass through the voice calibration guidance from the active platform lane — the in-lane vs. out-of-lane diagnostic. A copywriter reads this to self-check their work.",
-    "format_spec": "The structural format for this lane. For Built For This: the dual-use pairing structure and how to construct good pairings. For Yes You Can Chef: the affirmation-plus-specificity structure. Include enough detail that a writer can produce correct format without seeing the knowledge file.",
+    "voice_calibration": "INSTRUCTION: Return the actual voice calibration text from the active platform lane — the passage that starts with how to tell if copy is in-lane vs. out-of-lane. Return the real guidance, not a description of what it does.",
+    "format_spec": "INSTRUCTION: Return the actual format structure from the active platform lane. For Built For This, return the dual-use pairing rules. For Yes You Can Chef, return the affirmation-plus-specificity rules. Use the real content from the knowledge file.",
     "art_direction": {
-      "palette": "Color palette for this lane — from the visual direction in the knowledge file",
-      "in_frame": "What should be in the frame — from lane visual direction",
-      "never_in_frame": "What must never appear — from lane visual direction",
-      "emotional_reference": "The emotional register reference — e.g. The Bear, or a capable truck commercial",
-      "product_to_food": "The relationship between product and food in the visual — which is hero, which is enabler"
+      "palette": "INSTRUCTION: Return the actual color palette from the active lane's visual direction — e.g. 'Bold green palette' or 'Orange/yellow palette'",
+      "in_frame": "INSTRUCTION: Return what the lane says should be in the frame — the actual visual direction content",
+      "never_in_frame": "INSTRUCTION: Return what the lane says must never appear in the frame",
+      "emotional_reference": "INSTRUCTION: Return the specific emotional reference from the lane — e.g. 'The Bear' or 'A commercial for a capable truck or athletic shoe'",
+      "product_to_food": "INSTRUCTION: Return the lane's guidance on product vs. food visual hierarchy"
     },
     "content_inputs": {
       "primary_message": "The core thing the output needs to communicate",

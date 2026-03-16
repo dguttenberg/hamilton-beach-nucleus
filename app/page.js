@@ -196,62 +196,26 @@ function ContextPackageDisplay({ pkg }) {
         </div>
       </div>
 
-      {/* Copy Rules */}
-      {pkg.copy_rules?.length > 0 && (
-        <div style={{ ...styles.packageSection, gridColumn: "1 / -1" }}>
-          <h3 style={styles.packageLabel}>COPY RULES</h3>
-          <ul style={styles.ruleList}>
-            {pkg.copy_rules.map((rule, i) => (
-              <li key={i} style={styles.ruleItem}>{rule}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Voice Calibration + Format Spec — side by side */}
-      {pkg.voice_calibration && (
-        <div style={styles.packageSection}>
-          <h3 style={styles.packageLabel}>VOICE CALIBRATION</h3>
-          <p style={styles.packageValue}>{pkg.voice_calibration}</p>
-        </div>
-      )}
-      {pkg.format_spec && (
-        <div style={styles.packageSection}>
-          <h3 style={styles.packageLabel}>FORMAT SPEC</h3>
-          <p style={styles.packageValue}>{pkg.format_spec}</p>
-        </div>
-      )}
-
-      {/* Art Direction */}
+      {/* Art Direction — compact summary */}
       {pkg.art_direction && (
-        <div style={{ ...styles.packageSection, gridColumn: "1 / -1" }}>
+        <div style={styles.packageSection}>
           <h3 style={styles.packageLabel}>ART DIRECTION</h3>
           <div style={styles.subFields}>
             <div>
-              <span style={styles.subLabel}>Palette</span>
-              <p style={styles.subValue}>{pkg.art_direction?.palette}</p>
+              <span style={styles.subLabel}>Visual feel</span>
+              <p style={styles.subValue}>
+                {pkg.art_direction?.palette}. {pkg.art_direction?.emotional_reference}
+              </p>
             </div>
             <div>
               <span style={styles.subLabel}>In frame</span>
               <p style={styles.subValue}>{pkg.art_direction?.in_frame}</p>
             </div>
-            <div>
-              <span style={styles.subLabel}>Never in frame</span>
-              <p style={styles.subValue}>{pkg.art_direction?.never_in_frame}</p>
-            </div>
-            <div>
-              <span style={styles.subLabel}>Emotional reference</span>
-              <p style={styles.subValue}>{pkg.art_direction?.emotional_reference}</p>
-            </div>
-            <div>
-              <span style={styles.subLabel}>Product / food relationship</span>
-              <p style={styles.subValue}>{pkg.art_direction?.product_to_food}</p>
-            </div>
           </div>
         </div>
       )}
 
-      {/* Content Inputs */}
+      {/* Content Inputs — compact */}
       <div style={{ ...styles.packageSection, gridColumn: "1 / -1" }}>
         <h3 style={styles.packageLabel}>CONTENT INPUTS</h3>
         <div style={styles.subFields}>
@@ -259,12 +223,6 @@ function ContextPackageDisplay({ pkg }) {
             <span style={styles.subLabel}>Primary message</span>
             <p style={styles.subValue}>
               {pkg.content_inputs?.primary_message}
-            </p>
-          </div>
-          <div>
-            <span style={styles.subLabel}>Product context</span>
-            <p style={styles.subValue}>
-              {pkg.content_inputs?.product_context}
             </p>
           </div>
           {pkg.content_inputs?.use_cases?.length > 0 && (
@@ -286,18 +244,6 @@ function ContextPackageDisplay({ pkg }) {
                 {pkg.content_inputs.proof_points.map((pp, i) => (
                   <span key={i} style={styles.tagItem}>
                     {pp}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-          {pkg.content_inputs?.anchors_to_apply?.length > 0 && (
-            <div>
-              <span style={styles.subLabel}>Anchors to apply</span>
-              <div style={styles.tagList}>
-                {pkg.content_inputs.anchors_to_apply.map((a, i) => (
-                  <span key={i} style={{ ...styles.tagItem, ...styles.tagAnchor }}>
-                    {a}
                   </span>
                 ))}
               </div>
